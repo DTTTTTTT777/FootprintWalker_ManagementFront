@@ -14,6 +14,52 @@ const routes = [
         component: Home,
         children: [
             {
+                path: '/notification',
+                name: 'notification',
+                meta: {
+                    title: '通知',
+                    permiss: [],
+                },
+                component: () => import('../views/announcement.vue'),
+            },
+            {
+                path: '/file_management',
+                name: 'file_management',
+                meta: {
+                    title: '文件管理',
+                    permiss: [],
+                },
+                component: () => import('../views/announcement.vue'),
+            },
+            {
+                path: '/finance_management',
+                name: 'finance_management',
+                meta: {
+                    title: '财务信息管理',
+                    permiss: [],
+                },
+                component: () => import('../views/announcement.vue'),
+            },
+            {
+                path: '/reimbursement_management',
+                name: 'reimbursement_management',
+                meta: {
+                    title: '报销处理',
+                    permiss: [],
+                },
+                component: () => import('../views/announcement.vue'),
+            },
+            {
+                path: '/reimbursement_apply',
+                name: 'reimbursement_apply',
+                meta: {
+                    title: '报销申请',
+                    permiss: [],
+                },
+                component: () => import('../views/announcement.vue'),
+            },
+
+            {
                 path: '/dashboard',
                 name: 'dashboard',
                 meta: {

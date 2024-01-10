@@ -52,12 +52,49 @@ import {useSidebarStore} from '@/store/sidebar';
 import {useRoute} from 'vue-router';
 
 const items = [
+
   {
     icon: 'Odometer',
-    index: '/dashboard',
-    title: '系统首页',
+    index: '/announcement_system',
+    title: '公告板块',
     // permiss: ['User']
+    subs: [
+      {
+        index: '/notification',
+        title: '通知',
+        // permiss: ['Archaeologist'],
+      },
+      {
+        index: '/file_management',
+        title: '文件管理',
+        // permiss: ['Archaeologist'],
+      },
+    ]
   },
+  {
+    icon: 'Calendar',
+    title: '财务板块',
+    index: 'finance_system',
+    subs: [
+      {
+        index: '/finance_management',
+        title: '财务信息管理',
+        // permiss: ['Archaeologist'],
+      },
+      {
+        index: '/reimbursement_management',
+        title: '报销处理',
+        // permiss: ['Archaeologist'],
+      },
+      {
+        index: '/reimbursement_apply',
+        title: '报销申请',
+        // permiss: ['Archaeologist'],
+      },
+    ]
+  },
+
+    
   {
     icon: 'goods',
     index: '1',
