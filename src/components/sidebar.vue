@@ -94,7 +94,7 @@ const items = [
     ]
   },
 
-    
+
   {
     icon: 'goods',
     index: '1',
