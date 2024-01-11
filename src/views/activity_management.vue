@@ -11,10 +11,26 @@
       <el-table :data="tableData" border class="table" ref="multipleTable" header-cell-class-name="table-header">
         <el-table-column prop="id" label="活动ID" width="110" align="center" sortable></el-table-column>
         <el-table-column prop="title" label="活动标题" align="center"></el-table-column>
-        <el-table-column prop="startTime" label="开始时间" align="center"></el-table-column>
-        <el-table-column prop="endTime" label="结束时间" align="center"></el-table-column>
-        <el-table-column prop="registrationStartTime" label="报名开始时间" align="center"></el-table-column>
-        <el-table-column prop="registrationEndTime" label="报名结束时间" align="center"></el-table-column>
+        <el-table-column prop="startTime" label="开始时间" align="center">
+          <template #default="scope">
+            {{ formatDateTime(scope.row.startTime) }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="endTime" label="结束时间" align="center">
+          <template #default="scope">
+            {{ formatDateTime(scope.row.endTime) }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="registrationStartTime" label="报名开始时间" align="center">
+          <template #default="scope">
+            {{ formatDateTime(scope.row.registrationStartTime) }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="registrationEndTime" label="报名结束时间" align="center">
+          <template #default="scope">
+            {{ formatDateTime(scope.row.registrationEndTime) }}
+          </template>
+        </el-table-column>
         <el-table-column prop="location" label="活动地点" align="center"></el-table-column>
 
         <!-- 合并当前参与者数和预计参与上限 -->
@@ -49,17 +65,82 @@
     </div>
 
     <!-- 编辑弹出框 -->
-    <el-dialog title="修改文物状态" v-model="editVisible" width="60%">
+    <el-dialog title="修改活动内容" v-model="editVisible" width="60%">
       <!-- 表单内容 -->
-      <el-form label-width="70px">
-        <!-- 根据需要添加或修改表单项 -->
+      <el-form :model="form" ref="editFormRef" label-width="120px">
+        <el-form-item label="活动标题" prop="title">
+          <el-input v-model="form.title"></el-input>
+        </el-form-item>
+        <el-form-item label="开始时间" prop="startTime">
+          <el-date-picker v-model="form.startTime" type="datetime" placeholder="选择日期时间"></el-date-picker>
+        </el-form-item>
+        <el-form-item label="结束时间" prop="endTime">
+          <el-date-picker v-model="form.endTime" type="datetime" placeholder="选择日期时间"></el-date-picker>
+        </el-form-item>
+        <el-form-item label="报名开始时间" prop="registrationStartTime">
+          <el-date-picker v-model="form.registrationStartTime" type="datetime" placeholder="选择日期时间"></el-date-picker>
+        </el-form-item>
+        <el-form-item label="报名结束时间" prop="registrationEndTime">
+          <el-date-picker v-model="form.registrationEndTime" type="datetime" placeholder="选择日期时间"></el-date-picker>
+        </el-form-item>
+        <el-form-item label="活动地点" prop="location">
+          <el-input v-model="form.location"></el-input>
+        </el-form-item>
+        <el-form-item label="活动描述" prop="activityInfo">
+          <el-input type="textarea" v-model="form.activityInfo"></el-input>
+        </el-form-item>
+        <el-form-item label="活动状态" prop="activityStatus">
+          <el-select v-model="form.activityStatus" placeholder="请选择">
+            <el-option label="已发布" value="PUBLISHED"></el-option>
+            <el-option label="草稿" value="DRAFT"></el-option>
+            <el-option label="待审核" value="PENDING_REVIEW"></el-option>
+            <el-option label="往期回顾" value="RETROSPECTIVE"></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="活动收费" prop="cost">
+          <el-input-number v-model="form.cost" :min="0" controls-position="right" style="width: 40%;"></el-input-number>
+        </el-form-item>
+        <el-form-item label="人数上限" prop="estimatedLimit">
+          <el-input-number v-model="form.estimatedLimit" :min="1" controls-position="right" style="width: 40%;"></el-input-number>
+        </el-form-item>
+        <el-form-item label="负责人ID" prop="leaderIds">
+          <el-input v-model="form.leaderIds" placeholder="请输入负责人ID，多个ID以逗号分隔"></el-input>
+        </el-form-item>
+        <!-- ...根据需要添加其他表单项... -->
       </el-form>
       <template #footer>
-        <span class="dialog-footer">
-          <el-button @click="editVisible = false">取消</el-button>
-          <el-button type="primary" @click="saveEdit">确定</el-button>
-        </span>
+      <span class="dialog-footer">
+        <el-button @click="editVisible = false">取消</el-button>
+        <el-button type="primary" @click="saveEdit">确定</el-button>
+      </span>
       </template>
+    </el-dialog>
+
+    <!-- 查看弹出框 -->
+    <el-dialog title="查看活动详情" v-model="viewVisible" width="80%" :before-close="handleClose">
+      <el-descriptions bordered column="1">
+        <el-descriptions-item label="活动ID">{{ view.id }}</el-descriptions-item>
+        <el-descriptions-item label="活动标题">{{ view.title }}</el-descriptions-item>
+        <el-descriptions-item label="开始时间">{{ formatDateTime(view.startTime) }}</el-descriptions-item>
+        <el-descriptions-item label="结束时间">{{ formatDateTime(view.endTime) }}</el-descriptions-item>
+        <el-descriptions-item label="报名开始时间">{{ formatDateTime(view.registrationStartTime) }}</el-descriptions-item>
+        <el-descriptions-item label="报名结束时间">{{ formatDateTime(view.registrationEndTime) }}</el-descriptions-item>
+        <el-descriptions-item label="活动地点">{{ view.location }}</el-descriptions-item>
+        <el-descriptions-item label="校区">{{ joinCampuses(view.campus) }}</el-descriptions-item>
+        <el-descriptions-item label="费用">{{ view.cost }}</el-descriptions-item>
+        <el-descriptions-item label="活动信息">{{ view.activityInfo }}</el-descriptions-item>
+        <el-descriptions-item label="当前参与人数">{{ view.currentParticipants }}</el-descriptions-item>
+        <el-descriptions-item label="预计参与人数上限">{{ view.estimatedLimit }}</el-descriptions-item>
+        <el-descriptions-item label="活动状态">{{ formatActivityStatus(view.activityStatus) }}</el-descriptions-item>
+        <el-descriptions-item label="负责人ID">{{ view.leaderIds.join(', ') }}</el-descriptions-item>
+        <el-descriptions-item label="图片">
+          <div v-for="image in view.adImages" :key="image">
+            <img :src="image" alt="图片" style="max-width: 100px; max-height: 100px;">
+          </div>
+        </el-descriptions-item>
+        <el-descriptions-item label="组织细节">{{ view.organizeDetails }}</el-descriptions-item>
+        <el-descriptions-item label="参与者ID">{{ view.participantIds.join(', ') }}</el-descriptions-item>
+      </el-descriptions>
     </el-dialog>
 
   </div>
@@ -71,6 +152,7 @@ import { ref, reactive, computed } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { Delete, Edit, Search, Plus, View } from '@element-plus/icons-vue';
 import { axiosForActivity } from '../main.js';
+import{ formatDateTime , joinCampuses,formatActivityStatus} from '@/tools/Format.js'
 // import { fetchData } from '../api/index';
 import { onMounted } from 'vue'
 import {
@@ -158,9 +240,13 @@ interface TableItem {
   leaderIds: number[];
   adImages: string[];
   feedbackImages: string[];
-  feedbacks: Feedback[]; // Feedback 是另一个实体类
   organizeDetails: string;
   participantIds: number[];
+  // tableStartTime : string;
+  // tableEndTime : string;
+  // tableRegistrationStartTime : string;
+  // tableRegistrationEndTime : string;
+
 }
 
 enum ActivityStatus {
@@ -175,10 +261,6 @@ enum CampusData {
   JIADING = "嘉定校区",
   HUXI = "沪西校区",
   HUBEI = "沪北校区",
-}
-
-interface Feedback {
-
 }
 
 //请求数据
@@ -204,6 +286,8 @@ const query = reactive({
 const pageTotal = ref(0);
 let filteredData = ref<TableItem[]>([]); // 保存筛选的数据
 
+const editFormRef = ref(null);
+
 // 获取表格数据
 const getData = () => {
   fetchData();
@@ -222,112 +306,76 @@ const handlePageChange = (val: number) => {
 };
 const saveDelete = async (index: number) => {
   try {
-    const deletedItemId = tableData.value[index].collectionId;
-    await axiosInstance.delete(`http://42.192.39.198:5000/api/Collections/${deletedItemId}`);
+    const id = tableData.value[index].id;
+    await axiosForActivity.delete(`/api/activity/activities/${id}`);
     ElMessage.success('数据删除成功');
   } catch (error) {
     ElMessage.error('数据删除失败');
   }
 };
 // 处理删除操作
-const handleDelete = (index: number) => {
+const handleDelete = (index: number, row: any) => {
   // 二次确认删除
   ElMessageBox.confirm('确定要删除吗？', '提示', {
     type: 'warning',customClass: 'my-message-box'
   })
-      .then(() => {
-        ElMessage.success('删除成功');
+      .then(async () => {
+
         // 在这里调用 saveDelete 并传递要删除的数据索引
-        saveDelete(index);
-        tableData.value.splice(index, 1);
+        await saveDelete(index);
+        getData();
       })
       .catch(() => { });
 };
+
 
 // 表格编辑时弹窗和保存
 const editVisible = ref(false);
 // 表格查看详细资料时弹窗和保存
 const viewVisible = ref(false);
-const view2WarehouseVisible = ref(false);
-const view2ExhibitionVisible = ref(false);
+
+
+const handleClose = () => {
+
+  viewVisible.value = false;
+};
+
+
+
 //表单填写的内容
 let form = reactive({
-  area: '',
-  collectInfo: {
-    collectionId: '',
-    source: '',
-    collectMuseum: '',
-    generalRegistrationId: '',
-    collectTime: '',
-    collectionLevel: ''
-  },
-  collectionId: '',
-  collectionPhoto: '',
-  collectionType: '',
-  completeness: '',
-  completenessType: '',
-  dimensionInfo: {
-    collectionId: '',
-    dimension: '',
-    dimensionUnit: '',
-    weight: '',
-    weightUnit: '',
-    realQuantity: '',
-    traditionalQuantity: ''
-  },
-  era: '',
-  identificationComments: '',
-  identificationDate: '',
-  identificationStaffName: '',
-  name: '',
-  remark: '',
-  storageInfo: {
-    currentStatus: '',
-    protectionLevel: ''
-  },
-  originalName: '',
-  textureType: '',
-  exhibitionHallId: '',
-  warehouseId: '',
-  containerId: ''
+    id: 0,
+    title: '',
+    startTime: '',
+    endTime: '',
+    registrationStartTime: '',
+    registrationEndTime: '',
+    location: '',
+    activityInfo: '',
+    activityStatus: '',
+    estimatedLimit: null,
+    leaderIds: [],
+    cost:0
 });
 //查看的内容
 let view = reactive({
-  area: '',
-  collectInfo: {
-    collectionId: '',
-    source: '',
-    collectMuseum: '',
-    generalRegistrationId: '',
-    collectTime: '',
-    collectionLevel: ''
-  },
-  collectionId: '',
-  collectionPhoto: '',
-  collectionType: '',
-  completeness: '',
-  completenessType: '',
-  dimensionInfo: {
-    collectionId: '',
-    dimension: '',
-    dimensionUnit: '',
-    weight: '',
-    weightUnit: '',
-    realQuantity: '',
-    traditionalQuantity: ''
-  },
-  era: '',
-  identificationComments: '',
-  identificationDate: '',
-  identificationStaffName: '',
-  name: '',
-  remark: '',
-  storageInfo: {
-    currentStatus: '',
-    protectionLevel: ''
-  },
-  originalName: '',
-  textureType: ''
+    id: 0,
+    title: '',
+    startTime: '',
+    endTime: '',
+    campus:[],
+    registrationStartTime: '',
+    registrationEndTime: '',
+    location: '',
+    cost:0,
+    activityInfo: '',
+    activityStatus: '',
+    estimatedLimit: null,
+    currentParticipants:null,
+    organizeDetails: '',
+    adImages:[],
+    participantIds: [],
+    leaderIds: [],
 });
 
 //处理编辑操作
@@ -337,243 +385,72 @@ let time: string = "";
 //打开编辑框
 const handleEdit = (index: number, row: any) => {
   //将目前表格中的内容先同步到编辑框内
-  form.area = row.area;
-  form.collectInfo = {
-    collectionId: row.collectInfo.collectionId,
-    source: row.collectInfo.source,
-    collectMuseum: row.collectInfo.collectMuseum,
-    generalRegistrationId: row.collectInfo.generalRegistrationId,
-    collectTime: row.collectInfo.collectTime,
-    collectionLevel: row.collectInfo.collectionLevel
-  };
-  form.collectionId = row.collectionId;
-  form.collectionPhoto = row.collectionPhoto;
-  form.collectionType = row.collectionType;
-  form.completeness = row.completeness;
-  form.completenessType = row.completenessType;
-  form.dimensionInfo = {
-    collectionId: row.dimensionInfo.collectionId,
-    dimension: row.dimensionInfo.dimension,
-    dimensionUnit: row.dimensionInfo.dimensionUnit,
-    weight: row.dimensionInfo.weight,
-    weightUnit: row.dimensionInfo.weightUnit,
-    realQuantity: row.dimensionInfo.realQuantity,
-    traditionalQuantity: row.dimensionInfo.traditionalQuantity
-  };
-  form.era = row.era;
-  form.identificationComments = row.identificationComments;
-  form.identificationDate = row.identificationDate;
-  form.identificationStaffName = row.identificationStaffName;
-  form.name = row.name;
-  form.remark = row.remark;
-  form.storageInfo = {
-    currentStatus: row.storageInfo.currentStatus,
-    protectionLevel: row.storageInfo.protectionLevel
-  };
-  form.originalName = row.originalName;
-  form.textureType = row.textureType;
-  form.exhibitionHallId = row.exhibitionHallId;
-  form.warehouseId = row.warehouseId;
-  form.containerId=row.containerId;
+  Object.assign(form, row);
   editVisible.value = true;
   idx = index
+};
+
+const handleView = (index: number, row: any) => {
+  //将目前表格中的内容先同步到编辑框内
+  Object.assign(view, row);
+  viewVisible.value = true;
+  console.log(viewVisible.value)
+  idx = index;
 };
 
 //处理查看操作
 let i: number = -1;
 // const view = ref<TableItem[]>([]);
-const handleDetails = (index: number, row: any) => {
-  view.area = row.area;
-  view.collectInfo = {
-    collectionId: row.collectInfo.collectionId,
-    source: row.collectInfo.source,
-    collectMuseum: row.collectInfo.collectMuseum,
-    generalRegistrationId: row.collectInfo.generalRegistrationId,
-    collectTime: row.collectInfo.collectTime,
-    collectionLevel: row.collectInfo.collectionLevel
-  };
-  view.collectionId = row.collectionId;
-  view.collectionPhoto = row.collectionPhoto;
-  view.collectionType = row.collectionType;
-  view.completeness = row.completeness;
-  view.completenessType = row.completenessType;
-  view.dimensionInfo = {
-    collectionId: row.dimensionInfo.collectionId,
-    dimension: row.dimensionInfo.dimension,
-    dimensionUnit: row.dimensionInfo.dimensionUnit,
-    weight: row.dimensionInfo.weight,
-    weightUnit: row.dimensionInfo.weightUnit,
-    realQuantity: row.dimensionInfo.realQuantity,
-    traditionalQuantity: row.dimensionInfo.traditionalQuantity
-  };
-  view.era = row.era;
-  view.identificationComments = row.identificationComments;
-  view.identificationDate = row.identificationDate;
-  view.identificationStaffName = row.identificationStaffName;
-  view.name = row.name;
-  view.remark = row.remark;
-  view.storageInfo = {
-    currentStatus: row.storageInfo.currentStatus,
-    protectionLevel: row.storageInfo.protectionLevel
-  };
-  view.originalName = row.originalName;
-  view.textureType = row.textureType;
-  viewVisible.value = true;
-};
-
-const handleDetails2Exhibition = (index: number, row: any) => {
-  view.area = row.area;
-  view.collectInfo = {
-    collectionId: row.collectInfo.collectionId,
-    source: row.collectInfo.source,
-    collectMuseum: row.collectInfo.collectMuseum,
-    generalRegistrationId: row.collectInfo.generalRegistrationId,
-    collectTime: row.collectInfo.collectTime,
-    collectionLevel: row.collectInfo.collectionLevel
-  };
-  view.collectionId = row.collectionId;
-  view.collectionPhoto = row.collectionPhoto;
-  view.collectionType = row.collectionType;
-  view.completeness = row.completeness;
-  view.completenessType = row.completenessType;
-  view.dimensionInfo = {
-    collectionId: row.dimensionInfo.collectionId,
-    dimension: row.dimensionInfo.dimension,
-    dimensionUnit: row.dimensionInfo.dimensionUnit,
-    weight: row.dimensionInfo.weight,
-    weightUnit: row.dimensionInfo.weightUnit,
-    realQuantity: row.dimensionInfo.realQuantity,
-    traditionalQuantity: row.dimensionInfo.traditionalQuantity
-  };
-  view.era = row.era;
-  view.identificationComments = row.identificationComments;
-  view.identificationDate = row.identificationDate;
-  view.identificationStaffName = row.identificationStaffName;
-  view.name = row.name;
-  view.remark = row.remark;
-  view.storageInfo = {
-    currentStatus: row.storageInfo.currentStatus,
-    protectionLevel: row.storageInfo.protectionLevel
-  };
-  view.originalName = row.originalName;
-  view.textureType = row.textureType;
-  view2ExhibitionVisible.value = true;
-  print.time=getCurrentTime();
-};
-
-const handleDetails2Warehouse = (index: number, row: any) => {
-  view.area = row.area;
-  view.collectInfo = {
-    collectionId: row.collectInfo.collectionId,
-    source: row.collectInfo.source,
-    collectMuseum: row.collectInfo.collectMuseum,
-    generalRegistrationId: row.collectInfo.generalRegistrationId,
-    collectTime: row.collectInfo.collectTime,
-    collectionLevel: row.collectInfo.collectionLevel
-  };
-  view.collectionId = row.collectionId;
-  view.collectionPhoto = row.collectionPhoto;
-  view.collectionType = row.collectionType;
-  view.completeness = row.completeness;
-  view.completenessType = row.completenessType;
-  view.dimensionInfo = {
-    collectionId: row.dimensionInfo.collectionId,
-    dimension: row.dimensionInfo.dimension,
-    dimensionUnit: row.dimensionInfo.dimensionUnit,
-    weight: row.dimensionInfo.weight,
-    weightUnit: row.dimensionInfo.weightUnit,
-    realQuantity: row.dimensionInfo.realQuantity,
-    traditionalQuantity: row.dimensionInfo.traditionalQuantity
-  };
-  view.era = row.era;
-  view.identificationComments = row.identificationComments;
-  view.identificationDate = row.identificationDate;
-  view.identificationStaffName = row.identificationStaffName;
-  view.name = row.name;
-  view.remark = row.remark;
-  view.storageInfo = {
-    currentStatus: row.storageInfo.currentStatus,
-    protectionLevel: row.storageInfo.protectionLevel
-  };
-  view.originalName = row.originalName;
-  view.textureType = row.textureType;
-  view2WarehouseVisible.value = true;
-  print.time=getCurrentTime();
-};
 
 
-function getCurrentTime() {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = (now.getMonth() + 1).toString().padStart(2, '0');
-  const day = now.getDate().toString().padStart(2, '0');
-  const hours = now.getHours().toString().padStart(2, '0');
-  const minutes = now.getMinutes().toString().padStart(2, '0');
-  const seconds = now.getSeconds().toString().padStart(2, '0');
-  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
-}
+const sendUpdateRequest = async (data) => {
 
-//将数据上传到数据库中
-const uploadData = async () => {
-  console.log(tableData.value[idx])
-  try {
+  console.log('正在提交数据:', data);
+  await axiosForActivity.put('/api/activity/activities/' + data.id, data);
 
-    const response= await axiosInstance.put('/Collections/' + tableData.value[idx].collectionId, tableData.value[idx]);
-    //const response = await axios.put('http://42.192.39.198:5000/api/Collections/' + tableData.value[idx].collectionId, tableData.value[idx]);
-    ElMessage.success('数据上传成功');
-    getData();
-  } catch (error) {
-    ElMessage.error('数据上传失败');
-  }
+  // 模拟等待响应
+  await new Promise(resolve => setTimeout(resolve, 1000));
 };
 
 let radio = ref(3);
+
+async function uploadData(submitData) {
+  try {
+    const response = await axiosForActivity.post('/api/activities', submitData);
+    return response.data;
+  } catch (error) {
+    // 错误处理
+    throw error; // 或者返回错误信息，取决于您如何处理这些错误
+  }
+}
+
 //存储编辑的内容
 const saveEdit = async () => {
-  editVisible.value = false;
-  //遇事不决console.log
-  console.log('saveEdit')
-  console.log(tableData.value[idx].collectionId)
-  console.log(radio)
-  // ElMessage.success(`修改第 ${idx + 1} 行成功`);
-  tableData.value[idx].name = form.name;        //将修改的文物姓名同步到表格当中
-  tableData.value[idx].collectionType = form.collectionType;        //将修改的文物的种类同步到表格当中
-  tableData.value[idx].era = form.era;          //将修改的文物的朝代同步到表格当中
-  // tableData.value[idx].status = form.status;      //将修改的文物的状态同步到表格当中
-  // tableData.value[idx].hall_name = form.hall_name;      //将修改的文物的展厅名称同步到表格当中
-  if (radio.value == 1) {
-    tableData.value[idx].storageInfo.currentStatus = "在展";
-    tableData.value[idx].exhibitionHallId = form.exhibitionHallId;
+  // 首先验证表单
+  const isFormValid = await editFormRef.value.validate();
+  if (!isFormValid) {
+    ElMessage.error('表单数据有误，请检查后再提交！');
+    return;
   }
-  else if (radio.value == 2) {
-    tableData.value[idx].storageInfo.currentStatus = "在库";
-    tableData.value[idx].warehouseId = form.warehouseId;
-    tableData.value[idx].containerId = form.containerId;
+
+  // 表单验证通过后，转换数据（例如，leaderIds数组转为字符串）
+  const submitData = {
+    ...form,
+  };
+
+  // 提交数据到服务器
+  try {
+    // 假设有一个函数 sendUpdateRequest 来处理实际的API调用
+    await sendUpdateRequest(submitData);
+    ElMessage.success('活动更新成功！');
+    // 成功后的处理，比如关闭弹窗
+    editVisible.value = false;
+    getData();
+  } catch (error) {
+    // 处理错误
+    ElMessage.error('更新活动失败！');
   }
-  else if (radio.value == 3)
-    tableData.value[idx].storageInfo.currentStatus = "待鉴定";
-  else if (radio.value == 4)
-    tableData.value[idx].storageInfo.currentStatus = "修缮中";
 
-  radio.value = 3;
-
-  tableData.value[idx].storageInfo.protectionLevel = form.storageInfo.protectionLevel;
-  tableData.value[idx].textureType = form.textureType;
-  tableData.value[idx].area = form.area;
-  tableData.value[idx].collectInfo.source = form.collectInfo.source;
-  tableData.value[idx].completeness = form.completeness;
-  tableData.value[idx].dimensionInfo.dimension = form.dimensionInfo.dimension;
-  tableData.value[idx].dimensionInfo.weight = form.dimensionInfo.weight;
-  tableData.value[idx].dimensionInfo.traditionalQuantity = form.dimensionInfo.traditionalQuantity;
-  tableData.value[idx].dimensionInfo.realQuantity = form.dimensionInfo.realQuantity;
-  tableData.value[idx].identificationComments = form.identificationComments
-  tableData.value[idx].remark = form.remark
-  console.log(tableData.value);
-
-  // Update frontend table data
-  // tableData.value[idx] = updatedData;
-  ElMessage.success(`修改第 ${idx + 1} 行成功`);  //弹出弹窗提示用户修改成功
-  uploadData();
 
 };
 //关闭“查看详细信息”的弹窗
