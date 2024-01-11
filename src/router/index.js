@@ -38,7 +38,7 @@ const routes = [
                     title: '财务信息管理',
                     permiss: [],
                 },
-                component: () => import('../views/announcement.vue'),
+                component: () => import('../views/finance_management.vue'),
             },
             {
                 path: '/reimbursement_management',
@@ -56,7 +56,7 @@ const routes = [
                     title: '报销申请',
                     permiss: [],
                 },
-                component: () => import('../views/announcement.vue'),
+                component: () => import('../views/reimbursement_apply.vue'),
             },
 
             {
@@ -103,6 +103,15 @@ const routes = [
                     permiss: [],
                 },
                 component: () => import('../views/collection_repair.vue'),
+            },
+            {
+                path: '/collection_add',
+                name: 'collection_add',
+                meta: {
+                    title: '新增藏品',
+                    permiss: [],
+                },
+                component: () => import('../views/collection_add.vue'),
             },
             {
                 path: '/Human_Management',

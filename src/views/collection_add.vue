@@ -43,7 +43,7 @@
 
 						<el-upload v-model:file-list="fileList" class="upload-demo" multiple="false"
 							action="/foreignImage/upload" name="smfile"
-							:headers="{ Authorization: 'kydXBqSSWZNb12Q25q6OmXGGSKwajXXk' }" :on-success="handleSuccess"
+							:headers="{ Authorization: '36BZaEnY8eVdNuWGWhg0LgmSHByiHEGP' }" :on-success="handleSuccess"
 							:on-error="handleError" :before-upload="beforeUpload" :limit="1" :on-exceed="handleExceed"
 							prop="collectionPhoto">
 							<el-button size="small" type="primary">点击上传</el-button>
