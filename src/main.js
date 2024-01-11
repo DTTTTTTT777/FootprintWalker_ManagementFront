@@ -50,5 +50,8 @@ const axiosForActivity = axios.create({
     baseURL: 'http://localhost:9091'
 });
 
+const axiosForFinance = axios.create({
+    baseURL: 'http://localhost:1456'
+});
 
-export {axiosForActivity};
+export {axiosForActivity,axiosForFinance};
