@@ -1,413 +1,50 @@
 <template>
-  <div>
-    <div class="cardContainer" id="container">
+  <el-dialog title="新增活动" :visible.sync="addVisible" width="60%" :before-close="handleClose">
+    <el-form :model="addForm" ref="addFormRef" label-width="120px" label-position="right">
+      <el-form-item label="活动标题" prop="title" required>
+        <el-input v-model="addForm.title"></el-input>
+      </el-form-item>
+      <!-- 时间选择器 -->
+      <el-form-item label="开始时间" prop="startTime" required>
+        <el-date-picker v-model="addForm.startTime" type="datetime" placeholder="选择日期时间"></el-date-picker>
+      </el-form-item>
+      <el-form-item label="结束时间" prop="endTime" required>
+        <el-date-picker v-model="addForm.endTime" type="datetime" placeholder="选择日期时间"></el-date-picker>
+      </el-form-item>
 
-      <el-form label-width="70px">
-
-        <el-descriptions class="margin-top" :column="2" :size="size" border>
-          <!-- 收藏单位 -->
-          <el-descriptions-item :span="2">
-            <template #label>
-              <div class="cell-item" :style="{ minWidth: form.collectInfo.collectMuseum.length * 12 + 'px' }">
-                <el-icon :style="iconStyle">
-                  <user />
-                </el-icon>
-                收藏单位
-              </div>
-            </template>
-            {{ form.collectInfo.collectMuseum }}
-          </el-descriptions-item>
-          <!-- 现登记号 -->
-          <!--el-descriptions-item>
-            <template #label>
-              <div class="cell-item">
-                <el-icon :style="iconStyle">
-                  <EditPen />
-                </el-icon>
-                现登记号
-              </div>
-            </template>
-            1
-          </el-descriptions-item-->
-
-          <!-- 藏品图片 改一个提交方式：从本地上传-->
-          <el-descriptions-item :span="2">
-            <template #label>
-              <div class="cell-item">
-                <el-icon :style="iconStyle">
-                  <Picture />
-                </el-icon>
-                藏品图片*
-              </div>
-            </template>
-
-            <el-upload v-model:file-list="fileList" class="upload-demo" multiple="false"
-                       action="/foreignImage/upload" name="smfile"
-                       :headers="{ Authorization: 'kydXBqSSWZNb12Q25q6OmXGGSKwajXXk' }" :on-success="handleSuccess"
-                       :on-error="handleError" :before-upload="beforeUpload" :limit="1" :on-exceed="handleExceed"
-                       prop="collectionPhoto">
-              <el-button size="small" type="primary">点击上传</el-button>
-            </el-upload>
-            <!-- 显示已上传的图片 -->
-            <el-image v-if="form.collectionPhoto" class="CollectionImg" :src="form.collectionPhoto"
-                      :z-index="10" :height="10">
-            </el-image>
-
-          </el-descriptions-item>
-
-          <!-- 名称 -->
-          <el-descriptions-item>
-            <template #label>
-              <div class="cell-item">
-                <el-icon :style="iconStyle">
-                  <tickets />
-                </el-icon>
-                名称
-              </div>
-            </template>
-            <el-input v-model="form.name" placeholder="请输入文物名称"></el-input>
-          </el-descriptions-item>
-          <!-- 文物原名 -->
-          <el-descriptions-item required>
-            <template #label>
-              <div class="cell-item">
-                <el-icon :style="iconStyle">
-                  <tickets />
-                </el-icon>
-                原名*
-              </div>
-            </template>
-            <el-input v-model="form.originalName" placeholder="请输入文物原名" prop="originalName"></el-input>
-          </el-descriptions-item>
-          <!-- 文物级别 select没写完-->
-          <el-descriptions-item>
-            <template #label>
-              <div class="cell-item">
-                <el-icon :style="iconStyle">
-                  <Medal />
-                </el-icon>
-                文物级别
-              </div>
-            </template>
-            <el-autocomplete v-model="form.collectInfo.collectionLevel" :fetch-suggestions="levelQuerySearch"
-                             clearable class="inline-input w-50" placeholder="请选择文物级别" @select="levelSelect" />
-          </el-descriptions-item>
-          <!-- 文物类别 -->
-          <el-descriptions-item>
-            <template #label>
-              <div class="cell-item">
-                <el-icon :style="iconStyle">
-                  <Grid />
-                </el-icon>
-                文物类别*
-              </div>
-            </template>
-            <el-autocomplete v-model="form.collectionType" :fetch-suggestions="typeQuerySearch" clearable
-                             class="inline-input w-50" placeholder="请选择文物的类别" @select="typeHandleSelect" />
-          </el-descriptions-item>
-          <!-- 质地 -->
-          <el-descriptions-item>
-            <template #label>
-              <div class="cell-item">
-                <el-icon :style="iconStyle">
-                  <Pointer />
-                </el-icon>
-                质地*
-              </div>
-            </template>
-            <el-autocomplete v-model="form.textureType" :fetch-suggestions="textureQuerySearch" clearable
-                             class="inline-input w-50" placeholder="请选择文物的质地" @select="textureHandleSelect" />
-          </el-descriptions-item>
-          <!-- 来源 -->
-          <el-descriptions-item>
-            <template #label>
-              <div class="cell-item">
-                <el-icon :style="iconStyle">
-                  <MapLocation />
-                </el-icon>
-                来源*
-              </div>
-            </template>
-            <el-autocomplete v-model="form.collectInfo.source" :fetch-suggestions="sourceQuerySearch" clearable
-                             class="inline-input w-50" placeholder="请选择文物的来源" @select="sourceHandleSelect" />
-          </el-descriptions-item>
-          <!--年代 -->
-          <el-descriptions-item>
-            <template #label>
-              <div class="cell-item">
-                <el-icon :style="iconStyle">
-                  <Calendar />
-                </el-icon>
-                年代
-              </div>
-            </template>
-            <el-autocomplete v-model="form.era" :fetch-suggestions="eraQuerySearch" clearable
-                             class="inline-input w-50" placeholder="请选择文物的年代" @select="eraHandleSelect" />
-          </el-descriptions-item>
-          <!-- 地域 -->
-          <el-descriptions-item>
-            <template #label>
-              <div class="cell-item">
-                <el-icon :style="iconStyle">
-                  <LocationInformation />
-                </el-icon>
-                地域
-              </div>
-            </template>
-            <el-input v-model="form.area" placeholder="请输入文物的地域"></el-input>
-          </el-descriptions-item>
+      <el-upload v-model:file-list="fileList" class="upload-demo" multiple="false"
+                 action="/foreignImage/upload" name="smfile"
+                 :headers="{ Authorization: 'kydXBqSSWZNb12Q25q6OmXGGSKwajXXk' }" :on-success="handleSuccess"
+                 :on-error="handleError" :before-upload="beforeUpload" :limit="1" :on-exceed="handleExceed"
+                 prop="collectionPhoto">
+        <el-button size="small" type="primary">点击上传</el-button>
+      </el-upload>
+      <!-- 显示已上传的图片 -->
+      <el-image v-if="form.collectionPhoto" class="CollectionImg" :src="form.collectionPhoto"
+                :z-index="10" :height="10">
+      </el-image>
 
 
-          <!-- 完残程度类别 -->
-          <el-descriptions-item>
-            <template #label>
-              <div class="cell-item">
-                <el-icon :style="iconStyle">
-                  <Box />
-                </el-icon>
-                完残程度类别*
-              </div>
-            </template>
-            <el-autocomplete v-model="form.completenessType" :fetch-suggestions="completenessTypeQuerySearch"
-                             clearable class="inline-input w-50" placeholder="请选择文物的完残程度类别"
-                             @select="completenessTypeHandleSelect" />
-          </el-descriptions-item>
-
-          <!-- 完残程度 -->
-          <el-descriptions-item>
-            <template #label>
-              <div class="cell-item">
-                <el-icon :style="iconStyle">
-                  <Box />
-                </el-icon>
-                完残程度
-              </div>
-            </template>
-            <el-input v-model="form.completeness" placeholder="请输入文物的完残程度"></el-input>
-          </el-descriptions-item>
-
-
-          <!-- 尺寸 -->
-          <el-descriptions-item>
-            <template #label>
-              <div class="cell-item">
-                <el-icon :style="iconStyle">
-                  <FullScreen />
-                </el-icon>
-                尺寸
-              </div>
-            </template>
-            <el-input v-model="form.dimensionInfo.dimension" placeholder="请输入文物的尺寸"></el-input>
-          </el-descriptions-item>
-
-          <!-- 尺寸单位 -->
-          <el-descriptions-item>
-            <template #label>
-              <div class="cell-item">
-                <el-icon :style="iconStyle">
-                  <FullScreen />
-                </el-icon>
-                尺寸单位
-              </div>
-            </template>
-            <el-autocomplete v-model="form.dimensionInfo.dimensionUnit"
-                             :fetch-suggestions="dimensionUnitQuerySearch" clearable class="inline-input w-50"
-                             placeholder="请选择文物的尺寸单位" @select="dimensionUnitHandleSelect" />
-
-          </el-descriptions-item>
-
-          <!-- 质量-->
-          <el-descriptions-item>
-            <template #label>
-              <div class="cell-item">
-                <el-icon :style="iconStyle">
-                  <Coin />
-                </el-icon>
-                质量
-              </div>
-            </template>
-            <el-input v-model="form.dimensionInfo.weight" placeholder="请输入文物的质量"></el-input>
-          </el-descriptions-item>
-          <!-- 质量单位-->
-          <el-descriptions-item>
-            <template #label>
-              <div class="cell-item">
-                <el-icon :style="iconStyle">
-                  <Coin />
-                </el-icon>
-                质量单位
-              </div>
-            </template>
-            <el-autocomplete v-model="form.dimensionInfo.weightUnit" :fetch-suggestions="weightUnitQuerySearch"
-                             clearable class="inline-input w-50" placeholder="请选择文物的质量单位" @select="weightUnitHandleSelect" />
-
-          </el-descriptions-item>
-          <!-- 传统数量 -->
-          <el-descriptions-item>
-            <template #label>
-              <div class="cell-item">
-                <el-icon :style="iconStyle">
-                  <Histogram />
-                </el-icon>
-                传统数量*
-              </div>
-            </template>
-            <el-input v-model="form.dimensionInfo.traditionalQuantity" placeholder="请输入文物的传统数量"></el-input>
-          </el-descriptions-item>
-          <!-- 传统数量单位 -->
-          <el-descriptions-item>
-            <template #label>
-              <div class="cell-item">
-                <el-icon :style="iconStyle">
-                  <Histogram />
-                </el-icon>
-                传统数量单位*
-              </div>
-            </template>
-            <el-autocomplete v-model="form.dimensionInfo.traditionalQuantityUnit"
-                             :fetch-suggestions="traditionalQuantityUnitQuerySearch" clearable class="inline-input w-50"
-                             placeholder="请选择文物的传统数量单位" @select="traditionalQuantityUnitHandleSelect" />
-
-          </el-descriptions-item>
-
-          <!-- 实际数量 -->
-          <el-descriptions-item>
-            <template #label>
-              <div class="cell-item">
-                <el-icon :style="iconStyle">
-                  <Histogram />
-                </el-icon>
-                实际数量*
-              </div>
-            </template>
-            <el-input v-model="form.dimensionInfo.realQuantity" placeholder="请输入文物的实际数量"></el-input>
-          </el-descriptions-item>
-
-          <!-- 实际数量单位 -->
-          <el-descriptions-item>
-            <template #label>
-              <div class="cell-item">
-                <el-icon :style="iconStyle">
-                  <Histogram />
-                </el-icon>
-                实际数量单位*
-              </div>
-            </template>
-            <el-autocomplete v-model="form.dimensionInfo.realQuantityUnit"
-                             :fetch-suggestions="realQuantityUnitQuerySearch" clearable class="inline-input w-50"
-                             placeholder="请选择文物的实际数量单位" @select="realQuantityUnitHandleSelect" />
-
-          </el-descriptions-item>
-
-          <!-- 保护等级 -->
-          <el-descriptions-item>
-            <template #label>
-              <div class="cell-item">
-                <el-icon :style="iconStyle">
-                  <Trophy />
-                </el-icon>
-                保护等级
-              </div>
-            </template>
-            <el-autocomplete v-model="form.storageInfo.protectionLevel"
-                             :fetch-suggestions="protectLevelQuerySearch" clearable class="inline-input w-50"
-                             placeholder="请选择文物的保护等级" @select="protectLevelSelect" />
-          </el-descriptions-item>
-
-          <!-- 备注 -->
-          <el-descriptions-item>
-            <template #label>
-              <div class="cell-item">
-                <el-icon :style="iconStyle">
-                  <Histogram />
-                </el-icon>
-                备注
-              </div>
-            </template>
-            <el-input v-model="form.remark" placeholder="请输入备注"></el-input>
-          </el-descriptions-item>
-
-          <!-- 保存状况 -->
-          <el-descriptions-item>
-            <template #label>
-              <div class="cell-item">
-                <el-icon :style="iconStyle">
-                  <Collection />
-                </el-icon>
-                保存状况
-              </div>
-            </template>
-            <!-- <el-input v-model="form.storageInfo.currentStatus"></el-input> -->
-
-            {{ form.storageInfo.currentStatus }}
-
-          </el-descriptions-item>
-
-          <div>
-            <el-descriptions-item v-if="form.storageInfo.currentStatus === '在展'">
-              <template #label>
-                <div class="cell-item">
-                  <el-icon :style="iconStyle">
-                    <Collection />
-                  </el-icon>
-                  展厅编号
-                </div>
-              </template>
-              <el-input v-model="form.exhibitionHallId"></el-input>
-
-            </el-descriptions-item>
-
-            <el-descriptions-item v-if="form.storageInfo.currentStatus === '在库'">
-              <template #label>
-                <div class="cell-item">
-                  <el-icon :style="iconStyle">
-                    <Collection />
-                  </el-icon>
-                  仓库编号
-                </div>
-              </template>
-              <el-input v-model="form.warehouseId"></el-input>
-
-            </el-descriptions-item>
-
-            <el-descriptions-item v-if="form.storageInfo.currentStatus === '在库'">
-              <template #label>
-                <div class="cell-item">
-                  <el-icon :style="iconStyle">
-                    <Collection />
-                  </el-icon>
-                  货架
-                </div>
-              </template>
-              <el-input v-model="form.containerId"></el-input>
-
-            </el-descriptions-item>
-          </div>
-
-          <!-- 入藏时间 自动生成 感觉没必要显示它了-->
-          <el-descriptions-item>
-            <template #label>
-              <div class="cell-item">
-                <el-icon :style="iconStyle">
-                  <AlarmClock />
-                </el-icon>
-                入藏时间
-              </div>
-            </template>
-            <el-input v-model="form.collectInfo.collectTime"></el-input>
-          </el-descriptions-item>
-
-        </el-descriptions>
-
-      </el-form>
-    </div>
-
-    <div class="centered-button">
-      <el-button type="primary" @click="submitnew()">
-        提交
-      </el-button>
-    </div>
-  </div>
+      <!-- 更多表单项 -->
+      <el-form-item label="活动地点" prop="location" required>
+        <el-input v-model="addForm.location"></el-input>
+      </el-form-item>
+      <el-form-item label="活动描述" prop="activityInfo">
+        <el-input type="textarea" v-model="addForm.activityInfo"></el-input>
+      </el-form-item>
+      <el-form-item label="活动收费" prop="cost">
+        <el-input-number v-model="addForm.cost" :min="0" controls-position="right" class="wide-input"></el-input-number>
+      </el-form-item>
+      <el-form-item label="预计参与人数上限" prop="estimatedLimit">
+        <el-input-number v-model="addForm.estimatedLimit" :min="1" controls-position="right" class="wide-input"></el-input-number>
+      </el-form-item>
+      <!-- 操作按钮 -->
+      <div class="dialog-footer">
+        <el-button @click="addVisible = false">取消</el-button>
+        <el-button type="primary" @click="submitForm">提交</el-button>
+      </div>
+    </el-form>
+  </el-dialog>
 </template>
 
 <script setup lang="ts" name="basetable">
@@ -450,24 +87,24 @@ const axiosInstance = axios.create({
   baseURL: 'api',
 });
 
-// 拦截器：将token添加到每个请求中
-axiosInstance.interceptors.request.use((config) => {
-  const token = getToken();
-
-  if (token) {
-    if (config.headers) {
-      config.headers.Authorization = `Bearer ${token}`;
-    } else {
-      config.headers = {
-        Authorization: `Bearer ${token}`,
-      };
-    }
-  }
-
-  return config;
-}, (error) => {
-  return Promise.reject(error);
-});
+// // 拦截器：将token添加到每个请求中
+// axiosInstance.interceptors.request.use((config) => {
+//   const token = getToken();
+//
+//   if (token) {
+//     if (config.headers) {
+//       config.headers.Authorization = `Bearer ${token}`;
+//     } else {
+//       config.headers = {
+//         Authorization: `Bearer ${token}`,
+//       };
+//     }
+//   }
+//
+//   return config;
+// }, (error) => {
+//   return Promise.reject(error);
+// });
 
 
 interface TableItem {
