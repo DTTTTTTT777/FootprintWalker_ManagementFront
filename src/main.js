@@ -51,7 +51,14 @@ const axiosForActivity = axios.create({
 });
 
 const axiosForFinance = axios.create({
+    baseURL: 'http://localhost:6547'
+});
+
+export const axiosForFile = axios.create({
     baseURL: 'http://localhost:1456'
+});
+export const axiosForHuman = axios.create({
+    baseURL: 'http://localhost:8090'
 });
 
 export {axiosForActivity,axiosForFinance};

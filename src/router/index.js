@@ -47,7 +47,7 @@ const routes = [
                     title: '报销处理',
                     permiss: [],
                 },
-                component: () => import('../views/announcement.vue'),
+                component: () => import('../views/reimbursement_management.vue'),
             },
             {
                 path: '/reimbursement_apply',

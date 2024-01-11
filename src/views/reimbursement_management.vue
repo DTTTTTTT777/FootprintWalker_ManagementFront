@@ -20,11 +20,14 @@
         <el-table-column prop="type" label="类型"></el-table-column>
         <el-table-column prop="activityName" label="活动名称"></el-table-column>
         <el-table-column prop="amount" label="金额"></el-table-column>
-        <!--        <el-table-column prop="proofInfo" label="凭证信息"></el-table-column>-->
+        <el-table-column label="凭证信息" width="120">
+          <template #default="{ row }">
+            <el-image :src="row.proofInfo" style="width: 80px; height: 80px;" fit="cover"></el-image>
+          </template>
+        </el-table-column>
         <el-table-column prop="remark" label="备注"></el-table-column>
         <el-table-column prop="officerName" label="负责人"></el-table-column>
         <el-table-column prop="handlerName" label="处理人"></el-table-column>
-<!--        <el-table-column prop="time" label="时间"></el-table-column>-->
         <el-table-column label="操作" width="250" align="center">
           <template #default="scope">
             <div class="custom-button-container">
@@ -46,9 +49,6 @@
         <el-form-item label="类型">
           <el-input v-model="form.type"></el-input>
         </el-form-item>
-        <!--        <el-form-item label="活动名称">-->
-        <!--          <el-input v-model="form.activityName"></el-input>-->
-        <!--        </el-form-item>-->
         <el-form-item label="金额">
           <el-input v-model="form.amount"></el-input>
         </el-form-item>
@@ -76,23 +76,21 @@
         </span>
       </template>
     </el-dialog>
+
     <!-- 查看弹出框 -->
     <el-dialog title="查看财务信息" v-model="viewVisible" width="40%" v-if="viewVisible">
-      <el-form label-width="90px" disabled >
+      <el-form label-width="90px" disabled>
         <el-form-item label="财务类型">
           <el-input v-model="form.financeType"></el-input>
         </el-form-item>
         <el-form-item label="类型">
           <el-input v-model="form.type"></el-input>
         </el-form-item>
-        <!--        <el-form-item label="活动名称">-->
-        <!--          <el-input v-model="form.activityName"></el-input>-->
-        <!--        </el-form-item>-->
         <el-form-item label="金额">
           <el-input v-model="form.amount"></el-input>
         </el-form-item>
         <el-form-item label="凭证信息">
-          <el-input v-model="form.proofInfo"></el-input>
+          <el-image :src="viewImage" style="width: 200px; height: 200px;" fit="contain"></el-image>
         </el-form-item>
         <el-form-item label="备注">
           <el-input v-model="form.remark"></el-input>
@@ -119,17 +117,15 @@
 <script setup lang="ts">
 import { ref, reactive } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
-import {Delete, Edit, View} from '@element-plus/icons-vue';
+import { Delete, Edit, View } from '@element-plus/icons-vue';
 import axios from 'axios';
-import {axiosForFinance, axiosForFile, axiosForHuman, axiosForActivity} from '../main.js';
-
-
+import { axiosForFinance, axiosForFile, axiosForHuman, axiosForActivity } from '../main.js';
 
 const query = reactive({
   type: 'all',
   activityName: '',
   pageIndex: 1,
-  pageSize: 10
+  pageSize: 10,
 });
 
 interface FinancialRecord {
@@ -137,8 +133,8 @@ interface FinancialRecord {
   financeType: string;
   type: string;
   activityName: string;
-  officerName: string,
-  handlerName: string,
+  officerName: string;
+  handlerName: string;
   amount: number;
   proofInfo: string;
   remark: string;
@@ -149,6 +145,7 @@ interface FinancialRecord {
 
 const tableData = ref<FinancialRecord[]>([]);
 const pageTotal = ref(0);
+let viewImage = ''; // 存储查看弹出框中的图片URL
 
 // 示例函数，根据 ID 获取名字
 const getClerkNameById = async (id) => {
@@ -173,7 +170,6 @@ const getActivityNameById = async (id) => {
   }
 };
 
-
 // 获取财务信息数据
 const getAllFinancialRecords = async () => {
   try {
@@ -189,9 +185,10 @@ const getAllFinancialRecords = async () => {
 
     // 应用筛选条件
     if (query.type !== 'all') {
-      data = data.filter(record =>
+      data = data.filter((record) =>
           (query.type === 'true' && record.financeType === 'EXPENSE') ||
-          (query.type === 'false' && record.financeType === 'INCOME'));
+          (query.type === 'false' && record.financeType === 'INCOME')
+      );
     }
 
     // 异步获取额外信息
@@ -202,16 +199,13 @@ const getAllFinancialRecords = async () => {
       console.log(record.activityName, record.officerName, record.handlerName);
     }
 
-
     if (query.activityName) {
-      data = data.filter(record => record.activityName.includes(query.activityName));
+      data = data.filter((record) => record.activityName.includes(query.activityName));
     }
     console.log(data);
 
     tableData.value = data;
     pageTotal.value = data.length;
-
-
   } catch (error) {
     console.error(error);
   }
@@ -219,8 +213,8 @@ const getAllFinancialRecords = async () => {
 
 // 查询操作
 const handleSearch = () => {
-    getAllFinancialRecords();
-  };
+  getAllFinancialRecords();
+};
 
 getAllFinancialRecords();
 
@@ -229,9 +223,9 @@ getAllFinancialRecords();
 //   query.pageIndex = 1;
 //   getAllFinancialRecords();
 // };
-  const displayFinanceType = (financeType) => {
-    return financeType === 'INCOME' ? '收入' : financeType === 'EXPENSE' ? '支出' : financeType;
-  };
+const displayFinanceType = (financeType) => {
+  return financeType === 'INCOME' ? '收入' : financeType === 'EXPENSE' ? '支出' : financeType;
+};
 
 // 分页导航
 const handlePageChange = (val: number) => {
@@ -245,7 +239,7 @@ const handleDelete = (index: number) => {
   ElMessageBox.confirm('确定要删除该财务信息吗？', '提示', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
-    type: 'warning'
+    type: 'warning',
   })
       .then(async () => {
         try {
@@ -266,7 +260,6 @@ const handleDelete = (index: number) => {
 // 编辑操作
 const editVisible = ref(false);
 let viewVisible = ref(false);
-
 
 let form = reactive({
   id: 0,
@@ -300,20 +293,23 @@ const handleEdit = (index: number, row: FinancialRecord) => {
   console.log(editIndex);
   editVisible.value = true;
 };
-  const handleView = (index: number, row: FinancialRecord) => {
-    // 设置要显示的详细信息，你可以在这里根据需要填充弹窗中的内容
-    // 例如：form = row;
-    form = row;
-    editIndex = index;
-    viewVisible.value = true; // 显示弹窗
-  };
+const handleView = (index: number, row: FinancialRecord) => {
+  // 设置要显示的详细信息，你可以在这里根据需要填充弹窗中的内容
+  // 例如：form = row;
+  form = row;
+  editIndex = index;
+  viewVisible.value = true; // 显示弹窗
+
+  // 将图片URL传递给查看弹出框
+  viewImage = row.proofInfo;
+};
 
 // 保存编辑
 const saveEdit = async () => {
   try {
     const response = await axiosForFinance.put(`/api/finance/financialRecords/${form.id}`, form);
     ElMessage.success('修改成功');
-    tableData.value[editIndex] = form ;
+    tableData.value[editIndex] = form;
     editVisible.value = false;
   } catch (error) {
     ElMessage.error('修改失败');

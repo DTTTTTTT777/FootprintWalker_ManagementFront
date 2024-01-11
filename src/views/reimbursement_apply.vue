@@ -59,39 +59,62 @@
 <script setup lang="ts" productName="basetable">
 import { reactive, ref } from 'vue';
 import {ElMessage, UploadProps, UploadUserFile} from "element-plus";
+import {axiosForFinance, axiosForFile, axiosForHuman, axiosForActivity} from '../main.js';
 
 
 const form = reactive({
-  applicantId: '',
+  applicantId: 0,
   expenseType: '',
   amount: null,
   proofInfo: '',
-  remark: ''
+  remark: '',
+  status: "PENDING"
 });
 
 const rules = {
   applicantId: [{ required: true, message: '请输入申请者ID', trigger: 'blur' }],
   expenseType: [{ required: true, message: '请选择支出类型', trigger: 'change' }],
-  amount: [{ required: true, type: 'number', message: '请输入金额', trigger: 'blur' }],
+  amount: [{ required: true, message: '请输入金额', trigger: 'blur' }],
   proofInfo: [{ required: true, message: '请输入证明信息', trigger: 'blur' }],
 };
 
 const formRef = ref(null);
 const fileList = ref([]);
 const submitForm = () => {
-  formRef.value.validate((valid) => {
+  formRef.value.validate(async (valid) => {
     if (valid) {
-      alert('提交成功');
+      // 表单验证通过，发送POST请求创建报销申请
+      await createReimbursementRequest();
     } else {
       console.log('表单验证失败');
-      return false;
     }
   });
 };
 
+
+
 const resetForm = () => {
   formRef.value.resetFields();
 };
+
+const createReimbursementRequest = async () => {
+  try {
+    const response = await axiosForFinance.post('http://localhost:6547/api/finance/reimbursementRequests', form);
+    if (response.status === 200) {
+      // 请求成功，可以处理成功后的逻辑，例如清空表单等
+      alert('报销申请已成功提交');
+      resetForm();
+    } else {
+      // 请求失败，处理失败逻辑
+      alert('报销申请提交失败');
+    }
+  } catch (error) {
+    console.error('发生错误:', error);
+    alert('报销申请提交失败');
+  }
+};
+
+
 
 const handleSuccess = (response, file) => {
   // 处理上传成功后的回调
