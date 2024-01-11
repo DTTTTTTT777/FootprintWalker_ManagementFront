@@ -119,10 +119,13 @@ const getAllFinancialRecords = async () => {
     const response = await axiosForFinance.get('/api/finance/financialRecords', { params });
     console.log(response.data);
     const data = response.data;
+
     tableData.value = data;
     pageTotal.value = data.length;
+
     // tableData.value = data.records;
     // pageTotal.value = data.total;
+
   } catch (error) {
     console.error(error);
   }
@@ -175,23 +178,31 @@ let form = reactive<FinancialRecord>({
   id: 0,
   financeType: '',
   type: '',
-  activityName: 0,
+  activityName: '', // 应该是字符串
   amount: 0,
   proofInfo: '',
   remark: '',
   officerId: 0,
   handlerId: 0,
-  time: 0,
+  time: '',
 });
 
 let editIndex = -1;
 
+// const handleEdit = (index: number, row: FinancialRecord) => {
+//   // form = JSON.parse(JSON.stringify(row));
+//   form = { ...row };
+//   editIndex = index;
+//   console.log(form);
+//   console.log(editIndex);
+//   editVisible.value = true;
+// };
 const handleEdit = (index: number, row: FinancialRecord) => {
-  // form = JSON.parse(JSON.stringify(row));
-  form = { ...row };
+  form = JSON.parse(JSON.stringify(row)); // 使用深拷贝
   editIndex = index;
   editVisible.value = true;
 };
+
 
 // 保存编辑
 const saveEdit = async () => {
