@@ -23,7 +23,23 @@
 
       <!-- 证明信息 -->
       <el-form-item label-width="100px" class = "handle-input" label="证明信息" prop="proofInfo">
-        <el-input v-model="form.proofInfo" type="textarea"></el-input>
+<!--        <el-input v-model="form.proofInfo" type="textarea"></el-input>-->
+        <el-upload v-model:file-list="fileList" class="upload-demo" multiple="false"
+                   action="/foreignImage/upload" name="smfile"
+                   :headers="{ Authorization: '36BZaEnY8eVdNuWGWhg0LgmSHByiHEGP' }"
+                   :on-success="handleSuccess"
+                   :on-error="handleError"
+                   :before-upload="beforeUpload"
+                   :limit="1"
+                   :on-exceed="handleExceed"
+                   prop="proofInfo">
+
+        <el-button size="small" type="primary">点击上传</el-button>
+        </el-upload>
+        <!-- 显示已上传的图片 -->
+        <el-image v-if="form.proofInfo" class="CollectionImg" :src="form.proofInfo"
+                  :z-index="10" :height="10">
+        </el-image>
       </el-form-item>
 
       <!-- 备注 -->
@@ -40,8 +56,10 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts" productName="basetable">
 import { reactive, ref } from 'vue';
+import {ElMessage, UploadProps, UploadUserFile} from "element-plus";
+
 
 const form = reactive({
   applicantId: '',
@@ -59,7 +77,7 @@ const rules = {
 };
 
 const formRef = ref(null);
-
+const fileList = ref([]);
 const submitForm = () => {
   formRef.value.validate((valid) => {
     if (valid) {
@@ -74,6 +92,33 @@ const submitForm = () => {
 const resetForm = () => {
   formRef.value.resetFields();
 };
+
+const handleSuccess = (response, file) => {
+  // 处理上传成功后的回调
+  console.log('上传成功', response);
+  form.proofInfo = response.data.url;
+  // 在回调中处理SM.MS返回的数据，可以获取图片链接等信息
+};
+const handleError = (err) => {
+  // 处理上传失败后的回调
+  console.error('上传失败', err);
+};
+const beforeUpload = (file) => {
+
+  return true; // 返回true表示继续上传，返回false表示取消上传
+};
+
+
+const handlePreview = (uploadFile) => {
+  console.log(uploadFile);
+};
+
+const handleExceed = (files, uploadFiles) => {
+  ElMessage.warning(
+      `The limit is 1, you selected ${files.length} files this time, add up to ${files.length + uploadFiles.length} totally`
+  );
+};
+
 </script>
 
 <style scoped>
