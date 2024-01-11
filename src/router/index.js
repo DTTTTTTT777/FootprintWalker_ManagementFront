@@ -69,31 +69,31 @@ const routes = [
                 component: () => import('../views/dashboard.vue'),
             },
             {
-                path: '/collection_add',
-                name: 'collection_add',
+                path: '/activity_add',
+                name: 'activity_add',
                 meta: {
-                    title: '新增藏品',
+                    title: '新增活动',
                     permiss: [],
                 },
-                component: () => import('../views/collection_add.vue'),
+                component: () => import('../views/activity_add.vue'),
             },
             {
-                path: '/collection_search',
-                name: 'collectio_search',
+                path: '/activity_management',
+                name: 'activity_management',
                 meta: {
-                    title: '查询藏品',
+                    title: '活动管理',
                     permiss: [],
                 },
-                component: () => import('../views/collection_search.vue'),
+                component: () => import('../views/activity_management.vue'),
             },
             {
-                path: '/collection_research4unknown',
-                name: 'collection_research4unknown',
+                path: '/activity_reflextion',
+                name: 'activity_reflextion',
                 meta: {
-                    title: '未知文物研究鉴定',
+                    title: '活动推送管理',
                     permiss: [],
                 },
-                component: () => import('../views/collection_research4unknown.vue'),
+                component: () => import('../views/activity_reflextion.vue'),
             },
             {
                 path: '/collection_repair',

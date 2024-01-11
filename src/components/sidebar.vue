@@ -74,7 +74,7 @@ const items = [
   {
     icon: 'Calendar',
     title: '财务板块',
-    index: 'finance_system',
+    index: '/finance_system',
     subs: [
       {
         index: '/finance_management',
@@ -97,29 +97,24 @@ const items = [
 
   {
     icon: 'goods',
-    index: '1',
-    title: '藏品管理',
+    index: '/activity_system',
+    title: '活动管理',
     // permiss: ['CollectionManager','Archaeologist','CollectionResearcher'],
     subs: [
       {
-        index: '/collection_add',
-        title: '新增藏品',
+        index: '/activity_add',
+        title: '新增活动',
         // permiss: ['Archaeologist'],
       },
       {
-        index: '/collection_search',
-        title: '查询藏品',
+        index: '/activity_management',
+        title: '活动管理',
         // permiss: ['CollectionManager'],
       },
       {
-        index: '/collection_repair',
-        title: '修缮藏品',
+        index: '/activity_reflextion',
+        title: '活动推送管理',
         // permiss: ['CollectionRepair'],
-      },
-      {
-        index: '/collection_research4unknown',
-        title: '未知文物研究鉴定',
-        // permiss: ['CollectionResearcher'],
       },
       
     ],

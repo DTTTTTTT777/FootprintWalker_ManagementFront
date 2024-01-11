@@ -2,6 +2,7 @@ import { createApp } from 'vue'
 import App from './App.vue'
 import ElementPlus from 'element-plus'
 import zhCn from 'element-plus/dist/locale/zh-cn.mjs'
+import axios from "axios";
 import 'dayjs/locale/zh-cn'
 import router from './router/index.js'
 import { createPinia } from "pinia";
@@ -44,3 +45,10 @@ app.directive('permiss',
     }
 )
 app.mount("#app")
+
+const axiosForActivity = axios.create({
+    baseURL: 'http://localhost:9091'
+});
+
+
+export {axiosForActivity};
