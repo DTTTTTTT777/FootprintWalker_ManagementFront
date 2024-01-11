@@ -1,22 +1,20 @@
 <template>
-    <div title="新增活动"  width="100%">
-      <el-form :model="form" ref="addFormRef" label-width="120px" label-position="right">
+  <div class="activity-form-container">
+    <el-form :model="form" ref="addFormRef" label-width="120px" label-position="right">
+      <!-- 活动基本信息 -->
+      <div class="section">
         <el-row :gutter="20">
           <el-col :span="12">
-            <!-- 活动标题 -->
             <el-form-item label="活动标题" prop="title" required>
               <el-input v-model="form.title"></el-input>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <!-- 活动地点 -->
             <el-form-item label="活动地点" prop="location" required>
               <el-input v-model="form.location"></el-input>
             </el-form-item>
           </el-col>
         </el-row>
-
-        <!-- 时间选择器 -->
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="开始时间" prop="startTime" required>
@@ -29,78 +27,86 @@
             </el-form-item>
           </el-col>
         </el-row>
-
-        <el-descriptions :span="2">
-          <el-descriptions-item :span="2">
-            <template #label>
-              <div class="cell-item">
-                <el-icon :style="iconStyle">
-                  <Picture />
-                </el-icon>
-                活动图片*
-              </div>
-            </template>
-
-            <el-upload
-                v-model:file-list="form.adImages"
-                class="upload-demo"
-                multiple="false"
-                action="/foreignImage/upload"
-                name="smfile"
-                :headers="{ Authorization: '36BZaEnY8eVdNuWGWhg0LgmSHByiHEGP' }"
-                :on-success="handleSuccess"
-                :on-error="handleError"
-                :before-upload="beforeUpload"
-                :limit="10"
-                :on-exceed="handleExceed"
-                prop="adImages"
-            >
-              <el-button size="small" type="primary">点击上传</el-button>
-            </el-upload>
-            <!-- 显示已上传的图片 -->
-            <div v-if="form.adImages.length > 0">
-              <el-image
-                  v-for="(image, index) in form.adImages"
-                  :key="index"
-                  class="collection-img"
-                  :src="image"
-                  :fit="'cover'"
-              ></el-image>
-            </div>
-          </el-descriptions-item>
-        </el-descriptions>
-
-        <!-- 活动描述 -->
-        <el-form-item label="活动描述" prop="activityInfo">
-          <el-input type="textarea" v-model="form.activityInfo"></el-input>
-        </el-form-item>
-
-        <!-- 活动收费 -->
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="活动收费" prop="cost">
+            <el-form-item label="开始报名时间" prop="registrationStartTime" required>
+              <el-date-picker v-model="form.registrationStartTime" type="datetime" placeholder="选择日期时间"></el-date-picker>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="结束报名时间" prop="registrationEndTime" required>
+              <el-date-picker v-model="form.registrationEndTime" type="datetime" placeholder="选择日期时间"></el-date-picker>
+            </el-form-item>
+          </el-col>
+        </el-row>
+      </div>
+
+      <!-- 图片上传区域 -->
+      <div class="section upload-section">
+        <el-form-item label="活动图片" prop="adImages">
+          <el-upload
+              v-model:file-list="form.files"
+              class="upload-demo"
+              action="/foreignImage/upload"
+              name="smfile"
+              :headers="{ Authorization: 'kydXBqSSWZNb12Q25q6OmXGGSKwajXXk' }"
+              :on-success="handleSuccess"
+              :on-error="handleError"
+              :before-upload="beforeUpload"
+              :limit="10"
+              :on-exceed="handleExceed"
+              list-type="picture-card"
+              prop="proofInfo">
+            <i class="el-icon-plus"></i>
+          </el-upload>
+          <div class="image-preview" v-if="form.adImages.length > 0">
+            <el-image
+                v-for="(image, index) in form.files"
+                :key="index"
+                class="collection-img"
+                :src="image.response.data.url"
+                :fit="'cover'">
+            </el-image>
+          </div>
+        </el-form-item>
+      </div>
+
+      <!-- 更多表单项 -->
+      <div class="section">
+        <el-row :gutter="20">
+          <el-col :span="24">
+            <el-form-item label="活动描述" prop="activityInfo">
+              <el-input type="textarea" v-model="form.activityInfo"></el-input>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="活动收费" prop="cost" :min="0" controls-position="right">
               <el-input-number v-model="form.cost" :min="0" controls-position="right"></el-input-number>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="预计参与人数上限" prop="estimatedLimit">
+            <el-form-item label="人数上限" prop="estimatedLimit">
               <el-input-number v-model="form.estimatedLimit" :min="1" controls-position="right"></el-input-number>
             </el-form-item>
           </el-col>
         </el-row>
+      </div>
 
-        <!-- 操作按钮 -->
-        <div class="dialog-footer">
-          <el-button type="primary" @click="submitForm">提交</el-button>
-        </div>
-      </el-form>
-    </div>
-
+      <!-- 操作按钮 -->
+      <div class="section action-buttons">
+        <el-button type="primary" @click="submitForm">提交</el-button>
+      </div>
+    </el-form>
+  </div>
 </template>
+
 
 <script setup lang="ts" name="basetable">
 import { ref, reactive, computed } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
+import { axiosForActivity } from '../main.js';
 import { Delete, Edit, Search, Plus } from '@element-plus/icons-vue';
 import {
   Iphone,
@@ -154,6 +160,7 @@ enum CampusData {
   HUBEI = "沪北校区",
 }
 
+const addFormRef = ref(null);
 
 const form = reactive({
   id: 0, // 初始值为 0，但实际上应由数据库或其他来源生成
@@ -163,21 +170,27 @@ const form = reactive({
   registrationStartTime: '',
   registrationEndTime: '',
   location: '',
-  campus: [], // 根据实际的 CampusData 枚举值来填充
+  campus: ["四平路校区"], // 根据实际的 CampusData 枚举值来填充
   cost: 0.0,
   activityInfo: '',
   currentParticipants: 0,
   estimatedLimit: 0,
-  activityStatus: '', // 这应该是 ActivityStatus 枚举的一个值
-  leaderIds: [],
+  activityStatus: 'PENDING_REVIEW', // 这应该是 ActivityStatus 枚举的一个值
+  leaderIds: [0],
   adImages: [],
   organizeDetails: '',
-  participantIds: [],
+  participantIds: [0],
+  files: []
 });
-
+console.log("adImages", form.adImages)
 const handleSuccess = (response, file, fileList) => {
   // 处理上传成功
-  form.adImages = [response.url];
+  if(response.code == "success") {
+  }
+  else
+  {
+
+  }
 };
 
 const handleError = (err, file, fileList) => {
@@ -216,11 +229,81 @@ const iconStyle = computed(() => {
   }
 })
 
+const submitForm = async () => {
+  // 首先，确保表单引用已定义
+  if (!addFormRef.value) {
+    ElMessage.error('表单引用未定义');
+    return;
+  }
+
+  // 验证表单
+  const isValid = await addFormRef.value.validate();
+  if (!isValid) {
+    ElMessage.error('表单数据有误，请检查输入');
+    return;
+  }
+
+  // 提交表单数据
+  try {
+    // 假设使用 axios 发送 POST 请求
+    // 替换 URL 和 post 数据结构为您的实际需求
+    const response = await axiosForActivity.post('/api/activity/activities', form);
+    // 根据响应处理结果
+    if (response.status === 200) {
+      ElMessage.success('活动提交成功');
+      // 可能还需要进行一些操作，比如清空表单或跳转到其他页面
+    } else {
+      ElMessage.error('活动提交失败');
+    }
+  } catch (error) {
+    // 处理错误情况
+    console.error('提交活动时出错:', error);
+    ElMessage.error('提交活动时发生错误');
+  }
+};
+
 
 </script>
 
 
 <style scoped>
+.activity-form-container {
+  max-width: 800px;
+  margin: auto;
+  background: #f5f5f5; /* 浅灰色背景 */
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1); /* 添加轻微阴影效果 */
+}
+
+.section {
+  margin-bottom: 30px;
+}
+
+.upload-section .el-upload {
+  border: 1px dashed #d9d9d9;
+  border-radius: 4px;
+  padding: 10px;
+}
+
+.upload-section .image-preview {
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.collection-img {
+  width: 100px;
+  height: 100px;
+  margin-right: 10px;
+  margin-bottom: 10px;
+  border-radius: 4px;
+}
+
+.action-buttons {
+  text-align: right;
+}
+
 
 </style>
 
