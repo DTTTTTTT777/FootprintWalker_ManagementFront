@@ -48,6 +48,13 @@
             </div>
           </template>
         </el-table-column>
+        
+        <el-table-column label="活动发起人" align="center">
+          <template #default="scope">
+            {{ getClerkNameById(scope.row.initiatorId) }}
+          </template>
+        </el-table-column>
+
 
         <el-table-column label="活动状态" align="center">
           <template #default="scope">
