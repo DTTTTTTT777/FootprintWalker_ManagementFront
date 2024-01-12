@@ -11,20 +11,25 @@
       <!-- 表格显示报销申请 -->
       <el-table :data="tableData" border class="table" ref="reimbursementTable">
         <el-table-column prop="id" label="ID" width="55" align="center"></el-table-column>
-        <el-table-column prop="applicantId" label="申请者ID"></el-table-column>
+        <el-table-column label="申请人">
+          <template #default="scope">
+            {{ getClerkName(scope.row.applicantId) }}
+          </template>
+        </el-table-column>
         <el-table-column prop="expenseType" label="支出类型"></el-table-column>
         <el-table-column prop="amount" label="金额"></el-table-column>
         <!--        <el-table-column prop="proofInfo" label="证明信息"></el-table-column>-->
-        <el-table-column prop="remark" label="备注"></el-table-column>
+<!--        <el-table-column prop="remark" label="备注"></el-table-column>-->
         <el-table-column prop="status" label="状态"></el-table-column>
+
+        <el-table-column label="关联活动">
+          <template #default="scope">
+            {{ getActivityName(scope.row.activityId) }}
+          </template>
+        </el-table-column>
         <el-table-column prop="submitTime" label="申请时间" width="200px">
           <template #default="scope">
             {{ formatDateTime(scope.row.submitTime) }}
-          </template>
-        </el-table-column>
-        <el-table-column label="活动名称" width="200">
-          <template #default="scope">
-            {{ getActivityName(scope.row.activityId) }}
           </template>
         </el-table-column>
         <el-table-column label="操作" width="250" align="center">
@@ -118,7 +123,7 @@
         </el-form-item>
 
         <el-form-item label="选择活动">
-          <el-select v-model="form.activityId" placeholder="请选择相关活动">
+          <el-select v-model="form.activityId" placeholder="请选择相关活动" prop="activityId">
             <el-option
                 v-for="activity in activities"
                 :key="activity.id"
@@ -194,7 +199,7 @@
         </el-form-item>
 
         <el-form-item label="选择活动">
-          <el-select v-model="form.activityId" placeholder="请选择相关活动">
+          <el-select v-model="form.activityId" placeholder="请选择相关活动" prop="activityId">
             <el-option
                 v-for="activity in activities"
                 :key="activity.id"
@@ -261,6 +266,25 @@ const query = reactive({
   searchText: ''
 });
 
+const formRef = ref(null);
+
+let form = reactive<ReimbursementRecord>({
+  id: 0,
+  applicantId: 0,
+  activityId: null,
+  expenseType: '',
+  amount: 0,
+  proofInfo: '',
+  remark: '',
+  status: '',
+  submitTime: '',
+  presidentId: null,
+  financeClerkId: null,
+  financeClerkProcessTime: null,
+  presidentProcessTime: null,
+  rejectReason: null,
+});
+
 interface ReimbursementRecord {
   id: number;
   applicantId: number;
@@ -315,24 +339,7 @@ const showCreateDialog = () => {
   createVisible.value = true;
 };
 
-const formRef = ref(null);
 
-let form = reactive<ReimbursementRecord>({
-  id: 0,
-  applicantId: 0,
-  activityId: null,
-  expenseType: '',
-  amount: 0,
-  proofInfo: '',
-  remark: '',
-  status: '',
-  submitTime: '',
-  presidentId: null,
-  financeClerkId: null,
-  financeClerkProcessTime: null,
-  presidentProcessTime: null,
-  rejectReason: null,
-});
 
 // 获取报销申请数据
 const getAllReimbursementRecords = async () => {
@@ -355,12 +362,32 @@ const fetchActivities = async () => {
     console.error('Error fetching activities:', error);
   }
 };
-onMounted(fetchActivities);
 const getActivityName = (activityId) => {
-  console.log("activityId:",activityId);
+  // console.log("HEREactivityId:",activityId);
   const activity = activities.value.find(a => a.id === activityId);
   return activity ? activity.title : '未知活动';
 };
+const clerks = ref([]);
+
+const fetchClerks = async () => {
+  try {
+    const response = await axiosForHuman.get('/api/human_management/clerks');
+    clerks.value = response.data;
+  } catch (error) {
+    console.error('Error fetching clerks:', error);
+  }
+};
+
+onMounted(() => {
+  fetchActivities();
+  fetchClerks();
+});
+const getClerkName = (clerkId) => {
+  // console.log("HEREclerkId:",clerkId);
+  const clerk = clerks.value.find(c => c.id === clerkId);
+  return clerk ? clerk.name : '未知';
+};
+
 
 
 // 查看报销申请
@@ -409,7 +436,8 @@ const handleSearch = () => {
 getAllReimbursementRecords();
 
 const submitForm = () => {
-  console.log("submit-handleEdit-form.remark:", form.remark);
+  // console.log("submit-handleEdit-form.remark:", form.remark);
+  // console.log("submit-handleEdit-form.activityId:", form.activityId);
   formRef.value.validate(async (valid) => {
     if (valid) {
       // 表单验证通过，发送POST请求创建报销申请
@@ -421,6 +449,7 @@ const submitForm = () => {
 };
 
 const submitCreateForm = () => {
+  // console.log("form.activityId:",form.activityId);
   formRef.value.validate(async (valid) => {
     if (valid) {
       // 表单验证通过，发送POST请求创建报销申请

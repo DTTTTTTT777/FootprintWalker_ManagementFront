@@ -10,12 +10,22 @@
       <!-- 表格显示报销申请 -->
       <el-table :data="tableData" border class="table" ref="reimbursementTable">
         <el-table-column prop="id" label="ID" width="55" align="center"></el-table-column>
-        <el-table-column prop="applicantId" label="申请者ID"></el-table-column>
+        <el-table-column label="申请人">
+          <template #default="scope">
+            {{ getClerkName(scope.row.applicantId) }}
+          </template>
+        </el-table-column>
         <el-table-column prop="expenseType" label="支出类型"></el-table-column>
         <el-table-column prop="amount" label="金额"></el-table-column>
 <!--        <el-table-column prop="proofInfo" label="证明信息"></el-table-column>-->
-        <el-table-column prop="remark" label="备注"></el-table-column>
+<!--        <el-table-column prop="remark" label="备注"></el-table-column>-->
         <el-table-column prop="status" label="状态"></el-table-column>
+
+        <el-table-column label="关联活动">
+          <template #default="scope">
+            {{ getActivityName(scope.row.activityId) }}
+          </template>
+        </el-table-column>
         <el-table-column prop="submitTime" label="申请时间" width="200px">
           <template #default="scope">
             {{ formatDateTime(scope.row.submitTime) }}
@@ -128,7 +138,31 @@ const fetchActivities = async () => {
     console.error('Error fetching activities:', error);
   }
 };
-onMounted(fetchActivities);
+const getActivityName = (activityId) => {
+  console.log("HERE:activityId:",activityId);
+  const activity = activities.value.find(a => a.id === activityId);
+  return activity ? activity.title : '未知活动';
+};
+const clerks = ref([]);
+
+const fetchClerks = async () => {
+  try {
+    const response = await axiosForHuman.get('/api/human_management/clerks');
+    clerks.value = response.data;
+  } catch (error) {
+    console.error('Error fetching clerks:', error);
+  }
+};
+
+onMounted(() => {
+  fetchActivities();
+  fetchClerks();
+});
+const getClerkName = (clerkId) => {
+  const clerk = clerks.value.find(c => c.id === clerkId);
+  return clerk ? clerk.name : '未知';
+};
+
 
 interface ReimbursementRecord {
   id: number;

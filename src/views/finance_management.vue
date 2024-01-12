@@ -19,13 +19,34 @@
           </template>
         </el-table-column>
         <el-table-column prop="type" label="类型"></el-table-column>
-        <el-table-column prop="activityName" label="活动名称"></el-table-column>
+        <el-table-column label="关联活动">
+          <template #default="scope">
+            {{ getActivityName(scope.row.activityId) }}
+          </template>
+        </el-table-column>
         <el-table-column prop="amount" label="金额"></el-table-column>
         <!--        <el-table-column prop="proofInfo" label="凭证信息"></el-table-column>-->
-        <el-table-column prop="remark" label="备注"></el-table-column>
-        <el-table-column prop="officerName" label="负责人"></el-table-column>
-        <el-table-column prop="handlerName" label="处理人"></el-table-column>
-<!--        <el-table-column prop="time" label="时间"></el-table-column>-->
+<!--        <el-table-column prop="remark" label="备注"></el-table-column>-->
+<!--        <el-table-column prop="officerName" label="负责人"></el-table-column>-->
+<!--        <el-table-column prop="handlerName" label="处理人"></el-table-column>-->
+        <el-table-column label="申请人">
+          <template #default="scope">
+            {{ getClerkName(scope.row.officerId) }}
+          </template>
+        </el-table-column>
+        <el-table-column label="处理人">
+          <template #default="scope">
+            {{ getClerkName(scope.row.handlerId) }}
+          </template>
+        </el-table-column>
+
+        <el-table-column prop="time" label="时间" width="200px">
+          <template #default="scope">
+            {{ formatDateTime(scope.row.time) }}
+          </template>
+        </el-table-column>
+
+        <!--        <el-table-column prop="time" label="时间"></el-table-column>-->
         <el-table-column label="操作" width="250" align="center">
           <template #default="scope">
             <div class="custom-button-container">
@@ -48,7 +69,7 @@
           <el-input v-model="form.type"></el-input>
         </el-form-item>
         <el-form-item label="选择活动">
-          <el-select v-model="addIncomeForm.activityId" placeholder="请选择相关活动">
+          <el-select v-model="form.activityId" placeholder="请选择相关活动">
             <el-option
                 v-for="activity in activities"
                 :key="activity.id"
@@ -137,9 +158,19 @@
 <!--        </el-form-item>-->
 
         <!-- 类型 -->
-        <el-form-item label="类型" prop="type">
-          <el-input v-model="addIncomeForm.type"></el-input>
+<!--        <el-form-item label="类型" prop="type">-->
+<!--          <el-input v-model="addIncomeForm.type"></el-input>-->
+<!--        </el-form-item>-->
+
+        <el-form-item label-width="100px" class = "handle-select" label="支出类型" prop="type">
+          <el-select v-model="addIncomeForm.type" placeholder="请选择收入类型">
+            <el-option label="报名费" value="报名费"></el-option>
+            <el-option label="赞助费" value="赞助费"></el-option>
+            <el-option label="其他" value="其他"></el-option>
+            <!-- 更多选项 -->
+          </el-select>
         </el-form-item>
+
         <el-form-item label="选择活动">
           <el-select v-model="addIncomeForm.activityId" placeholder="请选择相关活动">
             <el-option
@@ -197,6 +228,7 @@ import { ElMessage, ElMessageBox } from 'element-plus';
 import {Delete, Edit, View} from '@element-plus/icons-vue';
 import axios from 'axios';
 import {axiosForFinance, axiosForFile, axiosForHuman, axiosForActivity} from '../main.js';
+import {formatDateTime} from "@/tools/Format";
 
 
 
@@ -211,9 +243,10 @@ interface FinancialRecord {
   id: number;
   financeType: string;
   type: string;
-  activityName: string;
-  officerName: string,
-  handlerName: string,
+  activityId: number,
+  // activityName: string,
+  // officerName: string,
+  // handlerName: string,
   amount: number;
   proofInfo: string;
   remark: string;
@@ -238,10 +271,32 @@ const addIncomeForm = reactive({
   remark: '',
   officerId: -1, // 根据需要设置
   handlerId: -1, // 根据需要设置
+  time: '',
 });
 
+// 编辑操作
+const editVisible = ref(false);
+let viewVisible = ref(false);
+
+
+let form: FinancialRecord = reactive({
+  id: 0,
+  financeType: '',
+  type: '',
+  activityId: null, // 应该是字符串
+  // activityName: '', // 应该是字符串
+  // officerName: '',
+  // handlerName: '',
+  amount: 0,
+  proofInfo: '',
+  remark: '',
+  officerId: 0,
+  handlerId: 0,
+  time: '',
+});
 
 const activities = ref([]);
+
 const fetchActivities = async () => {
   try {
     const response = await axiosForActivity.get('/api/activity/activities');
@@ -250,8 +305,11 @@ const fetchActivities = async () => {
     console.error('Error fetching activities:', error);
   }
 };
-onMounted(fetchActivities);
-
+const getActivityName = (activityId) => {
+  // console.log("activityId:",activityId);
+  const activity = activities.value.find(a => a.id === activityId);
+  return activity ? activity.title : '未知活动';
+};
 
 const showAddIncomeDialog = () => {
   addIncomeVisible.value = true;
@@ -262,6 +320,8 @@ const submitAddIncomeForm = async () => {
     if (valid) {
       try {
         addIncomeForm.officerId = addIncomeForm.handlerId = Number(localStorage.getItem('id'));
+        addIncomeForm.time = new Date().toISOString();
+        console.log(addIncomeForm);
         // 发送 POST 请求创建新的财务收入记录
         const response = await axiosForFinance.post('/api/finance/financialRecords', addIncomeForm);
         console.log(response);
@@ -282,27 +342,26 @@ const submitAddIncomeForm = async () => {
   });
 };
 
-// 示例函数，根据 ID 获取名字
-const getClerkNameById = async (id) => {
+
+const clerks = ref([]);
+
+const fetchClerks = async () => {
   try {
-    // 替换为实际的 API 调用
-    const response = await axiosForHuman.get(`api/human_management/clerks/${id}`);
-    return response.data.name;
+    const response = await axiosForHuman.get('/api/human_management/clerks');
+    clerks.value = response.data;
   } catch (error) {
-    console.error(error);
-    return '未知';
+    console.error('Error fetching clerks:', error);
   }
 };
 
-const getActivityNameById = async (id) => {
-  try {
-    // 替换为实际的 API 调用
-    const response = await axiosForActivity.get(`api/activity/activities/${id}`);
-    return response.data.title;
-  } catch (error) {
-    console.error(error);
-    return '未知';
-  }
+onMounted(() => {
+  fetchActivities();
+  fetchClerks();
+});
+
+const getClerkName = (clerkId) => {
+  const clerk = clerks.value.find(c => c.id === clerkId);
+  return clerk ? clerk.name : '未知';
 };
 
 
@@ -327,17 +386,17 @@ const getAllFinancialRecords = async () => {
     }
 
     // 异步获取额外信息
-    for (const record of data) {
-      record.activityName = await getActivityNameById(record.activityId);
-      record.officerName = await getClerkNameById(record.officerId);
-      record.handlerName = await getClerkNameById(record.handlerId);
-      console.log(record.activityName, record.officerName, record.handlerName);
-    }
+    // for (const record of data) {
+    //   record.activityName = await getActivityNameById(record.activityId);
+    //   record.officerName = await getClerkNameById(record.officerId);
+    //   record.handlerName = await getClerkNameById(record.handlerId);
+    //   console.log(record.activityName, record.officerName, record.handlerName);
+    // }
 
 
-    if (query.activityName) {
-      data = data.filter(record => record.activityName.includes(query.activityName));
-    }
+    // if (query.activityName) {
+    //   data = data.filter(record => record.activityName.includes(query.activityName));
+    // }
     console.log(data);
 
     tableData.value = data;
@@ -395,25 +454,7 @@ const handleDelete = (index: number) => {
       });
 };
 
-// 编辑操作
-const editVisible = ref(false);
-let viewVisible = ref(false);
 
-
-let form = reactive({
-  id: 0,
-  financeType: '',
-  type: '',
-  activityName: '', // 应该是字符串
-  officerName: '',
-  handlerName: '',
-  amount: 0,
-  proofInfo: '',
-  remark: '',
-  officerId: 0,
-  handlerId: 0,
-  time: '',
-});
 
 let editIndex = -1;
 
@@ -443,6 +484,7 @@ const handleEdit = (index: number, row: FinancialRecord) => {
 // 保存编辑
 const saveEdit = async () => {
   try {
+    console.log("here!!form.activityId:",form.activityId);
     const response = await axiosForFinance.put(`/api/finance/financialRecords/${form.id}`, form);
     ElMessage.success('修改成功');
     tableData.value[editIndex] = form ;
