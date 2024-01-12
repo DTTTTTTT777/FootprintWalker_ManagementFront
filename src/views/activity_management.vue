@@ -112,11 +112,39 @@
           <el-select v-model="form.activityStatus" placeholder="请选择">
             <el-option label="已发布" value="PUBLISHED"></el-option>
             <el-option label="草稿" value="DRAFT"></el-option>
-            <el-option label="待审核" value="PENDING_REVIEW"></el-option>
             <el-option label="往期回顾" value="RETROSPECTIVE"></el-option>
-            <el-option label="驳回" value="REJECTED"></el-option>
 
           </el-select>
+        </el-form-item>
+        <el-form-item>
+          <div class="section upload-section">
+            <el-form-item label="活动图片" prop="adImages">
+              <el-upload
+                  v-model:file-list="form.files"
+                  class="upload-demo"
+                  action="/foreignImage/upload"
+                  name="smfile"
+                  :headers="{ Authorization: 'kydXBqSSWZNb12Q25q6OmXGGSKwajXXk' }"
+                  :on-success="handleSuccess"
+                  :on-error="handleError"
+                  :before-upload="beforeUpload"
+                  :limit="10"
+                  :on-exceed="handleExceed"
+                  list-type="picture-card"
+                  prop="proofInfo">
+                <i class="el-icon-plus"></i>
+              </el-upload>
+              <div class="image-preview" v-if="form.adImages.length > 0">
+                <el-image
+                    v-for="(image, index) in form.files"
+                    :key="index"
+                    class="collection-img"
+                    :src="image.response.data.url"
+                    :fit="'cover'">
+                </el-image>
+              </div>
+            </el-form-item>
+          </div>
         </el-form-item>
         <el-form-item label="活动收费" prop="cost">
           <el-input-number v-model="form.cost" :min="0" controls-position="right" style="width: 40%;"></el-input-number>
@@ -190,6 +218,7 @@ import { Delete, Edit, Search, Plus, View } from '@element-plus/icons-vue';
 import { axiosForActivity , axiosForHuman} from '../main.js';
 import{ formatDateTime , joinCampuses,formatActivityStatus ,getStatusType} from '@/tools/Format.js'
 import { getClerkList } from '@/tools/apiRequest'
+import qs from 'qs'
 
 import { onMounted } from 'vue'
 import {
@@ -227,6 +256,7 @@ interface TableItem {
   organizeDetails: string; // 组织细节
   participantIds: number[]; // 参与者ID列表
   initiatorId : number;
+  files: string[],
 }
 
 enum ActivityStatus {
@@ -247,21 +277,13 @@ enum CampusData {
 const query = reactive({
   name: '',         //文物姓名
   id: '',           //文物id
-  collectionType: ' ',        //文物类别
-  era: ' ',         //文物的朝代
-  status: ' ',      //藏品状态
-  excavation_site: ' ',    //出土地
-  excavation_date: ' ',   //出土日期
-  collectTime: '',	//收藏的时间
+
   pageIndex: 1,      //所在页面
   pageSize: 10,       //总页面
-  storageInfo: {
-    currentStatus: '',
-    protectionLevel: ''
-  },
+
   value: '',
 });
-//文物展示表格的数据
+
 
 const pageTotal = ref(0);
 let filteredData = ref<TableItem[]>([]); // 保存筛选的数据
@@ -269,15 +291,21 @@ let clerksList = ref([])
 const editFormRef = ref(null);
 let clerksMap = {}
 
+
 // 获取表格数据
 const getData = async () => {
   try {
-    const response = await axiosForActivity.get('/api/activity/activities/other-status', {
+    const response = await axiosForActivity.get('/api/activity/activities/status', {
       params: {
+        statuses: ['PUBLISHED', 'RETROSPECTIVE'],
         page: query.pageIndex - 1, // Spring Data JPA 页码从0开始
         size: query.pageSize,
         search: query.value, // 这里是搜索条件，确保后端支持该参数
         // 可能还有其他过滤条件
+      },
+      paramsSerializer: params => {
+        // 使用 qs 自定义序列化参数
+        return qs.stringify(params, { arrayFormat: 'repeat' })
       }
     });
     clerksList = await getClerkList();
@@ -405,6 +433,9 @@ let form = reactive({
     leaderIds: [],
     cost:0,
     initiatorId: -1,
+    files: [],
+    adImages:[]
+
 });
 //查看的内容
 let view = reactive({
@@ -506,9 +537,39 @@ const saveEdit = async () => {
 
 
 
+const beforeUpload = (file) => {
+  // 上传前的校验
+  const isImage = file.type === 'image/jpeg' || file.type === 'image/png';
+  if (!isImage) {
+    ElMessage.error('上传图片只能是 JPG 或 PNG 格式!');
+    return false;
+  }
+  const isLt2M = file.size / 1024 / 1024 < 2;
+  if (!isLt2M) {
+    ElMessage.error('上传图片大小不能超过 2MB!');
+    return false;
+  }
+  return true;
+};
 
+const handleExceed = (files, fileList) => {
+  // 文件超出限制时的处理
+  ElMessage.warning('只能上传一张图片');
+};
+const handleSuccess = (response, file, fileList) => {
+  // 处理上传成功
+  if(response.code == "success") {
+  }
+  else
+  {
 
+  }
+};
 
+const handleError = (err, file, fileList) => {
+  // 处理上传失败
+  ElMessage.error('图片上传失败');
+};
 
 </script>
 
