@@ -16,6 +16,11 @@
 <!--        <el-table-column prop="proofInfo" label="证明信息"></el-table-column>-->
         <el-table-column prop="remark" label="备注"></el-table-column>
         <el-table-column prop="status" label="状态"></el-table-column>
+        <el-table-column prop="submitTime" label="申请时间" width="200px">
+          <template #default="scope">
+            {{ formatDateTime(scope.row.submitTime) }}
+          </template>
+        </el-table-column>
         <el-table-column label="操作" width="250" align="center">
           <template #default="scope">
             <div class="custom-button-container">
@@ -48,7 +53,10 @@
           <el-input v-model="form.status"></el-input>
         </el-form-item>
         <el-form-item label="申请时间">
-          <el-input v-model="form.submitTime"></el-input>
+<!--          <el-input v-model="form.submitTime"></el-input>-->
+          <template #default="scope">
+            {{ formatDateTime(form.submitTime) }}
+          </template>
         </el-form-item>
         <!--        <el-form-item label="证明信息1">-->
         <!--          <el-input v-model="form.proofInfo"></el-input>-->
@@ -59,13 +67,19 @@
         </el-form-item>
 
         <el-form-item label="财务干事处理时间" v-if="form.financeClerkId">
-          <el-input v-model="form.financeClerkProcessTime"></el-input>
+
+          <template #default="scope">
+            {{ formatDateTime(form.financeClerkId) }}
+          </template>
         </el-form-item>
         <el-form-item label="社长处理时间" v-if="form.presidentProcessTime">
-          <el-input v-model="form.presidentProcessTime"></el-input>
+
+          <template #default="scope">
+            {{ formatDateTime(form.presidentProcessTime) }}
+          </template>
         </el-form-item>
-        <el-form-item label="驳回理由" v-if="form.rejectedReason">
-          <el-input v-model="form.rejectedReason"></el-input>
+        <el-form-item label="驳回理由" v-if="form.rejectReason">
+          <el-input v-model="form.rejectReason"></el-input>
         </el-form-item>
 
 
@@ -98,6 +112,8 @@ import { ref, reactive } from 'vue';
 import { ElMessage } from 'element-plus';
 import axios from 'axios';
 import {axiosForFinance, axiosForFile, axiosForHuman, axiosForActivity} from '../main.js';
+import { nextTick } from 'vue';
+import {formatDateTime} from '../tools/Format.js'
 
 const query = reactive({
   searchText: ''
@@ -112,10 +128,11 @@ interface ReimbursementRecord {
   remark: string;
   status: string;
   submitTime: string;
+  presidentId: number;
   financeClerkId: number;
   financeClerkProcessTime: string;
   presidentProcessTime: string;
-  rejectedReason: string;
+  rejectReason: string;
 }
 
 const tableData = ref<ReimbursementRecord[]>([]);
@@ -132,10 +149,11 @@ let form = reactive<ReimbursementRecord>({
   remark: '',
   status: '',
   submitTime: '',
+  presidentId: null,
   financeClerkId: null,
   financeClerkProcessTime: null,
   presidentProcessTime: null,
-  rejectedReason: null,
+  rejectReason: null,
 });
 
 // 获取报销申请数据
@@ -152,23 +170,41 @@ const getAllReimbursementRecords = async () => {
 };
 
 // 查看报销申请
-const handleView = (row: ReimbursementRecord) => {
-  form = { ...row };
-  console.log("form:" , form);
-  console.log("form.proofInfo:", form.proofInfo);
+const handleView = async (row: ReimbursementRecord) => {
+  form = row;
+  console.log("handleEdit-form:", form);
+  console.log("handleEdit-form.status:", form.status);
+  console.log("handleEdit-form.proof:", form.proofInfo);
+  // await nextTick(); // 确保视图更新完成
   viewVisible.value = true;
 };
 
+// 批准报销申请
 const handleApprove = async (row: ReimbursementRecord) => {
   try {
-    const clerkType=localStorage.getItem("clerkType");
-    console.log("clerkType",clerkType);
-    // console.log("row:",row);
-    // console.log("row.id:",row.id);
-    row.status = "APPROVED"
-    await axiosForFinance.put(`/api/finance/reimbursementRequests/${row.id}`,row);
-    ElMessage.success('申请已批准');
-    getAllReimbursementRecords();
+    const clerkType = localStorage.getItem("clerkType"); // 假设从本地存储获取用户类型
+    const clerkId = localStorage.getItem("id");
+    let response;
+
+    if (clerkType === "FINANCIAL_CLERK") {
+      // 财务干事批准
+      response = await axiosForFinance.put(`/api/finance/reimbursementRequests/${row.id}/approve/financeClerk`, null, {
+        params: { financeClerkId: clerkId } // 发送财务干事ID作为查询参数
+      });
+    } else if (clerkType === "PRESIDENT") {
+      // 社长批准
+      response = await axiosForFinance.put(`/api/finance/reimbursementRequests/${row.id}/approve/president`,null, {
+        params: { presidentId: clerkId } }
+      );
+    }
+
+    if (response && response.status === 200) {
+      ElMessage.success('申请已批准');
+      await getAllReimbursementRecords();
+      window.location.reload(); // 强制刷新页面
+    } else {
+      ElMessage.error('操作失败');
+    }
   } catch (error) {
     ElMessage.error('操作失败');
     console.error(error);
@@ -178,21 +214,47 @@ const handleApprove = async (row: ReimbursementRecord) => {
 // 显示驳回对话框
 const handleReject = (row: ReimbursementRecord) => {
   form = { ...row };
+  console.log(form);
   rejectVisible.value = true;
 };
 
 // 确认驳回
 const confirmReject = async () => {
   try {
-    await axiosForFinance.put(`/api/finance/reimbursementRequests/${form.id}`, { reason: rejectReason.value });
-    ElMessage.success('申请已驳回');
-    rejectVisible.value = false;
-    getAllReimbursementRecords();
+    const clerkType = localStorage.getItem("clerkType"); // 假设从本地存储获取用户类型
+    const clerkId = localStorage.getItem("id");
+    let response;
+
+    if (clerkType === "FINANCIAL_CLERK") {
+      // 财务干事驳回
+      response = await axiosForFinance.put(`/api/finance/reimbursementRequests/${form.id}/reject/financeClerk`, {
+        rejectReason: rejectReason.value,
+        financeClerkId: clerkId
+      });
+    } else if (clerkType === "PRESIDENT") {
+      // 社长驳回
+      response = await axiosForFinance.put(`/api/finance/reimbursementRequests/${form.id}/reject/president`, {
+        rejectReason: rejectReason.value,
+        presidentId: clerkId
+      });
+    }
+
+    if (response && response.status === 200) {
+      ElMessage.success('申请已驳回');
+      rejectVisible.value = false;
+      await getAllReimbursementRecords();
+      window.location.reload(); // 强制刷新页面
+    } else {
+      ElMessage.error('操作失败');
+    }
   } catch (error) {
     ElMessage.error('操作失败');
     console.error(error);
   }
 };
+
+
+
 
 
 // 搜索报销申请

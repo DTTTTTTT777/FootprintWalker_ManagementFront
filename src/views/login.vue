@@ -69,7 +69,8 @@ const login = () => {
   justify-content: center;
   align-items: center;
   height: 100vh;
-  background-image: url('../assets/img/login.png'); /* 将图片的 URL 替换为你想要的图片地址 */
+  background-image: url('../assets/img/loginBackgroundImage.png'); /* 将图片的 URL 替换为你想要的图片地址 */
+  //background-image: url('../assets/img/img.png'); /* 将图片的 URL 替换为你想要的图片地址 */
   background-size: cover; /* 图片将填充容器，并保持纵横比，可能会裁剪部分内容 */
   background-position: center; /* 将图片在容器中居中显示 */
 }

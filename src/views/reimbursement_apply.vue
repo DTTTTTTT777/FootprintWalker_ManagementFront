@@ -67,7 +67,7 @@ import {axiosForFinance, axiosForFile, axiosForHuman, axiosForActivity} from '..
 
 
 const form = reactive({
-  applicantId: 0,
+  applicantId: -1,
   expenseType: '',
   amount: null,
   proofInfo: '',
@@ -110,6 +110,11 @@ const resetForm = () => {
 const createReimbursementRequest = async () => {
   try {
     form.submitTime = new Date().toISOString();
+    const clerkId=localStorage.getItem('id');
+    form.applicantId = Number(clerkId);
+    console.log(clerkId);
+    console.log(form.applicantId);
+    console.log("form:",form);
     const response = await axiosForFinance.post('http://localhost:6547/api/finance/reimbursementRequests', form);
     if (response.status === 200) {
       // 请求成功，可以处理成功后的逻辑，例如清空表单等

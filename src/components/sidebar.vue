@@ -91,6 +91,11 @@ const items = [
         title: '报销申请',
         // permiss: ['Archaeologist'],
       },
+      {
+        index: '/my_reimbursement_apply',
+        title: '我的报销申请',
+        // permiss: ['Archaeologist'],
+      },
     ]
   },
 

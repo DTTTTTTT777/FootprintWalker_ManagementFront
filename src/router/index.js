@@ -6,7 +6,7 @@ import { useUserInfo } from '../store/userInfo';
 const routes = [
     {
         path: '/',
-        redirect: '/dashboard',
+        redirect: '/login',
     },
     {
         path: '/',
@@ -39,6 +39,15 @@ const routes = [
                     permiss: [],
                 },
                 component: () => import('../views/finance_management.vue'),
+            },
+            {
+                path: '/my_reimbursement_apply',
+                name: 'my_reimbursement_apply',
+                meta: {
+                    title: '财务信息管理',
+                    permiss: [],
+                },
+                component: () => import('../views/my_reimbursement_apply.vue'),
             },
             {
                 path: '/reimbursement_management',
