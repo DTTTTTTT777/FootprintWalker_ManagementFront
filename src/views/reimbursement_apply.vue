@@ -11,7 +11,11 @@
         <el-select v-model="form.expenseType" placeholder="请选择支出类型">
           <el-option label="交通费" value="交通费"></el-option>
           <el-option label="住宿费" value="住宿费"></el-option>
-          <el-option label="餐饮费" value="餐饮费"></el-option>
+          <el-option label="餐费" value="餐费"></el-option>
+          <el-option label="保险费" value="保险费"></el-option>
+          <el-option label="景点门票费" value="景点门票费"></el-option>
+          <el-option label="活动费" value="活动费"></el-option>
+          <el-option label="其他" value="其他"></el-option>
           <!-- 更多选项 -->
         </el-select>
       </el-form-item>
@@ -68,7 +72,13 @@ const form = reactive({
   amount: null,
   proofInfo: '',
   remark: '',
-  status: "PENDING"
+  status: "待处理",
+  submitTime: '',
+  financeClerkId: null,
+  financeClerkProcessTime: null,
+  presidentProcessTime: null,
+  rejectedReason: null,
+
 });
 
 const rules = {
@@ -99,6 +109,7 @@ const resetForm = () => {
 
 const createReimbursementRequest = async () => {
   try {
+    form.submitTime = new Date().toISOString();
     const response = await axiosForFinance.post('http://localhost:6547/api/finance/reimbursementRequests', form);
     if (response.status === 200) {
       // 请求成功，可以处理成功后的逻辑，例如清空表单等
@@ -119,7 +130,12 @@ const createReimbursementRequest = async () => {
 const handleSuccess = (response, file) => {
   // 处理上传成功后的回调
   console.log('上传成功', response);
-  form.proofInfo = response.data.url;
+  console.log(response.success);
+  if(response.success == true)
+    form.proofInfo = response.data.url;
+  else
+    form.proofInfo = response.images;
+  console.log(form.proofInfo);
   // 在回调中处理SM.MS返回的数据，可以获取图片链接等信息
 };
 const handleError = (err) => {
