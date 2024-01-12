@@ -29,6 +29,24 @@ export function formatActivityStatus(status) {
     DRAFT: '草稿',
     PENDING_REVIEW: '待审核',
     RETROSPECTIVE: '往期回顾',
+    REJECTED : '已驳回',
   };
   return statusMap[status] || status;
+}
+
+export function getStatusType(status) {
+  switch (status) {
+    case 'PUBLISHED':
+      return 'success'; // 绿色
+    case 'DRAFT':
+      return 'info'; // 蓝色
+    case 'PENDING_REVIEW':
+      return 'warning'; // 黄色
+    case 'REJECTED':
+      return 'danger'; // 红色
+    case 'RETROSPECTIVE':
+      return 'primary'; // 淡蓝色
+    default:
+      return 'default'; // 默认灰色
+  }
 }

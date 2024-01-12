@@ -48,7 +48,7 @@
             </div>
           </template>
         </el-table-column>
-        
+
         <el-table-column label="活动发起人" align="center">
           <template #default="scope">
             {{ getClerkNameById(scope.row.initiatorId) }}
@@ -114,6 +114,8 @@
             <el-option label="草稿" value="DRAFT"></el-option>
             <el-option label="待审核" value="PENDING_REVIEW"></el-option>
             <el-option label="往期回顾" value="RETROSPECTIVE"></el-option>
+            <el-option label="驳回" value="REJECTED"></el-option>
+
           </el-select>
         </el-form-item>
         <el-form-item label="活动收费" prop="cost">
@@ -186,7 +188,7 @@ import { ref, reactive, computed } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { Delete, Edit, Search, Plus, View } from '@element-plus/icons-vue';
 import { axiosForActivity , axiosForHuman} from '../main.js';
-import{ formatDateTime , joinCampuses,formatActivityStatus} from '@/tools/Format.js'
+import{ formatDateTime , joinCampuses,formatActivityStatus ,getStatusType} from '@/tools/Format.js'
 import { getClerkList } from '@/tools/apiRequest'
 
 import { onMounted } from 'vue'
@@ -265,32 +267,12 @@ const pageTotal = ref(0);
 let filteredData = ref<TableItem[]>([]); // 保存筛选的数据
 let clerksList = ref([])
 const editFormRef = ref(null);
-
-// 根据ID获取负责人的名字的方法
-// 从ID映射到名字的计算属性
-const clerksMap = computed(() => {
-  const map = {};
-  console.log(clerksList)
-  clerksList.forEach(clerk => {
-    map[clerk.id] = clerk.name;
-  });
-  return map;
-});
-
-// 根据ID获取负责人的名字的方法
-function getClerkNameById(id) {
-  return clerksMap.value[id] || '未知'; // 如果找不到ID，则返回'未知'
-}
-
-// 检查是否是最后一个ID，以避免在列表末尾添加逗号
-function isLastClerkId(id) {
-  return view.leaderIds.indexOf(id) === view.leaderIds.length - 1;
-}
+let clerksMap = {}
 
 // 获取表格数据
 const getData = async () => {
   try {
-    const response = await axiosForActivity.get('/api/activity/activities/by-page', {
+    const response = await axiosForActivity.get('/api/activity/activities/other-status', {
       params: {
         page: query.pageIndex - 1, // Spring Data JPA 页码从0开始
         size: query.pageSize,
@@ -298,12 +280,34 @@ const getData = async () => {
         // 可能还有其他过滤条件
       }
     });
-    clerksList = await getClerkList()
+    clerksList = await getClerkList();
 
 
     // 打印响应数据，便于调试
     console.log(response.data);
     console.log(clerksList);
+
+// 根据ID获取负责人的名字的方法
+// 从ID映射到名字的计算属性
+    clerksMap = computed(() => {
+        const map = {};
+        if (!clerksList || !Array.isArray(clerksList)) {
+          console.error('clerksList is invalid:', clerksList);
+          return map; // 返回一个空的映射
+        }
+        console.log(clerksList)
+        console.log(clerksList.value)
+        clerksList.forEach(clerk => {
+          if (clerk && clerk.id != null && clerk.name) {
+            console.log(clerk)
+            map[clerk.id] = clerk.name;
+          } else {
+            console.warn('Invalid clerk data:', clerk);
+          }
+        });
+
+        return map;
+    });
 
     tableData.value = response.data.content.map(activity => {
       // 将 participantIds 数组长度设置为 currentParticipants
@@ -321,6 +325,17 @@ const getData = async () => {
 
 getData();
 
+
+
+// 根据ID获取负责人的名字的方法
+function getClerkNameById(id) {
+  return clerksMap.value[id] || '未知'; // 如果找不到ID，则返回'未知'
+}
+
+// 检查是否是最后一个ID，以避免在列表末尾添加逗号
+function isLastClerkId(id) {
+  return view.leaderIds.indexOf(id) === view.leaderIds.length - 1;
+}
 
 
 // 分页导航
@@ -488,21 +503,6 @@ const saveEdit = async () => {
 
 };
 
-// 根据活动状态返回对应的 el-tag 类型
-function getStatusType(status) {
-  switch (status) {
-    case 'PUBLISHED':
-      return 'success'; // 绿色
-    case 'DRAFT':
-      return 'info'; // 蓝色
-    case 'PENDING_REVIEW':
-      return 'warning'; // 黄色
-    case 'RETROSPECTIVE':
-      return 'danger'; // 红色
-    default:
-      return 'default'; // 默认灰色
-  }
-}
 
 
 

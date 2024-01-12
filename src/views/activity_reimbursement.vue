@@ -78,65 +78,6 @@
       </div>
     </div>
 
-    <!-- 编辑弹出框 -->
-    <el-dialog title="修改活动内容" v-model="editVisible" width="60%">
-      <!-- 表单内容 -->
-      <el-form :model="form" ref="editFormRef" label-width="120px">
-        <el-form-item label="活动标题" prop="title">
-          <el-input v-model="form.title"></el-input>
-        </el-form-item>
-        <el-form-item label="开始时间" prop="startTime">
-          <el-date-picker v-model="form.startTime" type="datetime" placeholder="选择日期时间"></el-date-picker>
-        </el-form-item>
-        <el-form-item label="结束时间" prop="endTime">
-          <el-date-picker v-model="form.endTime" type="datetime" placeholder="选择日期时间"></el-date-picker>
-        </el-form-item>
-        <el-form-item label="报名开始时间" prop="registrationStartTime">
-          <el-date-picker v-model="form.registrationStartTime" type="datetime" placeholder="选择日期时间"></el-date-picker>
-        </el-form-item>
-        <el-form-item label="报名结束时间" prop="registrationEndTime">
-          <el-date-picker v-model="form.registrationEndTime" type="datetime" placeholder="选择日期时间"></el-date-picker>
-        </el-form-item>
-        <el-form-item label="活动地点" prop="location">
-          <el-input v-model="form.location"></el-input>
-        </el-form-item>
-        <el-form-item label="活动描述" prop="activityInfo">
-          <el-input type="textarea" v-model="form.activityInfo"></el-input>
-        </el-form-item>
-        <el-form-item label="活动状态" prop="activityStatus">
-          <el-select v-model="form.activityStatus" placeholder="请选择">
-            <el-option label="已发布" value="PUBLISHED"></el-option>
-            <el-option label="草稿" value="DRAFT"></el-option>
-            <el-option label="待审核" value="PENDING_REVIEW"></el-option>
-            <el-option label="往期回顾" value="RETROSPECTIVE"></el-option>
-          </el-select>
-        </el-form-item>
-        <el-form-item label="活动收费" prop="cost">
-          <el-input-number v-model="form.cost" :min="0" controls-position="right" style="width: 40%;"></el-input-number>
-        </el-form-item>
-        <el-form-item label="人数上限" prop="estimatedLimit">
-          <el-input-number v-model="form.estimatedLimit" :min="1" controls-position="right" style="width: 40%;"></el-input-number>
-        </el-form-item>
-        <el-form-item label="负责人" prop="leaderIds">
-          <el-select v-model="form.leaderIds" multiple placeholder="请选择负责人">
-            <el-option
-                v-for="clerk in clerksList"
-                :key="clerk.id"
-                :label="clerk.name"
-                :value="clerk.id">
-            </el-option>
-          </el-select>
-        </el-form-item>
-        <!-- ...根据需要添加其他表单项... -->
-      </el-form>
-      <template #footer>
-      <span class="dialog-footer">
-        <el-button @click="editVisible = false">取消</el-button>
-        <el-button type="primary" @click="saveEdit">确定</el-button>
-      </span>
-      </template>
-    </el-dialog>
-
     <!-- 查看弹出框 -->
     <el-dialog title="查看活动详情" v-model="viewVisible" width="80%" :before-close="handleClose">
       <div class="dialog-content">
@@ -172,6 +113,20 @@
       </div>
     </el-dialog>
 
+    <!-- 驳回弹出框 -->
+    <el-dialog title="驳回理由" v-model="rejectVisible" width="40%">
+      <el-form label-width="90px">
+        <el-form-item label="驳回理由">
+          <el-input type="textarea" v-model="rejectReason"></el-input>
+        </el-form-item>
+      </el-form>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="rejectVisible = false">取消</el-button>
+        <el-button type="primary" @click="confirmReject">确认驳回</el-button>
+      </span>
+    </el-dialog>
+
+
   </div>
 </template>
 
@@ -181,7 +136,7 @@ import { ref, reactive, computed } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { Delete, Edit, Search, Plus, View } from '@element-plus/icons-vue';
 import {axiosForActivity, axiosForFinance, axiosForHuman} from '../main.js';
-import{ formatDateTime , joinCampuses,formatActivityStatus} from '@/tools/Format.js'
+import{ formatDateTime , joinCampuses,formatActivityStatus ,getStatusType} from '@/tools/Format.js'
 import { getClerkList } from '@/tools/apiRequest'
 
 import { onMounted } from 'vue'
@@ -220,6 +175,7 @@ interface TableItem {
   organizeDetails: string; // 组织细节
   participantIds: number[]; // 参与者ID列表
   initiatorId : number;
+  rejectReason : string;
 }
 
 enum ActivityStatus {
@@ -260,6 +216,7 @@ const pageTotal = ref(0);
 let filteredData = ref<TableItem[]>([]); // 保存筛选的数据
 let clerksList = ref([])
 const editFormRef = ref(null);
+let rejectReason = ref({})
 
 // 根据ID获取负责人的名字的方法
 // 从ID映射到名字的计算属性
@@ -362,7 +319,7 @@ const editVisible = ref(false);
 // 表格查看详细资料时弹窗和保存
 const viewVisible = ref(false);
 
-
+const rejectVisible = ref(false);
 const handleClose = () => {
 
   viewVisible.value = false;
@@ -371,21 +328,27 @@ const handleClose = () => {
 
 
 //表单填写的内容
-let form = reactive({
-  id: 0,
-  title: '',
-  startTime: '',
-  endTime: '',
-  registrationStartTime: '',
-  registrationEndTime: '',
-  location: '',
-  activityInfo: '',
-  activityStatus: '',
-  estimatedLimit: null,
-  leaderIds: [],
-  cost:0,
-  initiatorId: -1,
-});
+let form: {
+  estimatedLimit: number;
+  registrationEndTime: string;
+  cost: number;
+  campus: CampusData[];
+  currentParticipants: number;
+  organizeDetails: string;
+  initiatorId: number;
+  title: string;
+  registrationStartTime: string;
+  activityInfo: string;
+  rejectReason: string;
+  leaderIds: number[];
+  activityStatus: ActivityStatus;
+  startTime: string;
+  location: string;
+  participantIds: number[];
+  id: number;
+  endTime: string;
+  adImages: string[]
+};
 //查看的内容
 let view = reactive({
   id: 0,
@@ -476,7 +439,7 @@ const handleApprove = async (row: TableItem) => {
 };
 
 // 显示驳回对话框
-const handleReject = (row: ReimbursementRecord) => {
+const handleReject = (row: TableItem) => {
   form = { ...row };
   rejectVisible.value = true;
 };
@@ -484,7 +447,11 @@ const handleReject = (row: ReimbursementRecord) => {
 // 确认驳回
 const confirmReject = async () => {
   try {
-    await axiosForFinance.put(`/api/finance/reimbursementRequests/${form.id}`, { reason: rejectReason.value });
+    const requestBody = {
+      activityStatus: "REJECTED"
+    };
+    console.log(form.id)
+    await axiosForActivity.put(`/api/activity/activities/${form.id}/status`, requestBody)
     ElMessage.success('申请已驳回');
     rejectVisible.value = false;
     getData();
