@@ -39,6 +39,29 @@
             </el-form-item>
           </el-col>
         </el-row>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="校区选择" prop="campus" required>
+              <el-select v-model="form.campus" multiple placeholder="选择校区">
+                <el-option label="四平路校区" value="四平路校区"></el-option>
+                <el-option label="嘉定校区" value="嘉定校区"></el-option>
+                <el-option label="沪西校区" value="沪西校区"></el-option>
+                <el-option label="沪北校区" value="沪北校区"></el-option>
+                <!-- 添加其他校区选项 -->
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <!-- 新增负责人ID输入 -->
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="负责人ID" prop="leaderIds" required>
+              <el-input v-model="form.leaderIds" placeholder="输入负责人ID，多个ID以逗号分隔"></el-input>
+            </el-form-item>
+          </el-col>
+        </el-row>
+
       </div>
 
       <!-- 图片上传区域 -->
@@ -245,6 +268,10 @@ const submitForm = async () => {
 
   // 提交表单数据
   try {
+
+    form.adImages = form.files.map(file => file.response && file.response.data ? file.response.data.url : null);
+
+
     // 假设使用 axios 发送 POST 请求
     // 替换 URL 和 post 数据结构为您的实际需求
     const response = await axiosForActivity.post('/api/activity/activities', form);

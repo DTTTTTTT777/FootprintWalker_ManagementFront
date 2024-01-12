@@ -118,29 +118,33 @@
 
     <!-- 查看弹出框 -->
     <el-dialog title="查看活动详情" v-model="viewVisible" width="80%" :before-close="handleClose">
-      <el-descriptions bordered column="1">
-        <el-descriptions-item label="活动ID">{{ view.id }}</el-descriptions-item>
-        <el-descriptions-item label="活动标题">{{ view.title }}</el-descriptions-item>
-        <el-descriptions-item label="开始时间">{{ formatDateTime(view.startTime) }}</el-descriptions-item>
-        <el-descriptions-item label="结束时间">{{ formatDateTime(view.endTime) }}</el-descriptions-item>
-        <el-descriptions-item label="报名开始时间">{{ formatDateTime(view.registrationStartTime) }}</el-descriptions-item>
-        <el-descriptions-item label="报名结束时间">{{ formatDateTime(view.registrationEndTime) }}</el-descriptions-item>
-        <el-descriptions-item label="活动地点">{{ view.location }}</el-descriptions-item>
-        <el-descriptions-item label="校区">{{ joinCampuses(view.campus) }}</el-descriptions-item>
-        <el-descriptions-item label="费用">{{ view.cost }}</el-descriptions-item>
-        <el-descriptions-item label="活动信息">{{ view.activityInfo }}</el-descriptions-item>
-        <el-descriptions-item label="当前参与人数">{{ view.currentParticipants }}</el-descriptions-item>
-        <el-descriptions-item label="预计参与人数上限">{{ view.estimatedLimit }}</el-descriptions-item>
-        <el-descriptions-item label="活动状态">{{ formatActivityStatus(view.activityStatus) }}</el-descriptions-item>
-        <el-descriptions-item label="负责人ID">{{ view.leaderIds.join(', ') }}</el-descriptions-item>
-        <el-descriptions-item label="图片">
-          <div v-for="image in view.adImages" :key="image">
-            <img :src="image" alt="图片" style="max-width: 100px; max-height: 100px;">
-          </div>
-        </el-descriptions-item>
-        <el-descriptions-item label="组织细节">{{ view.organizeDetails }}</el-descriptions-item>
-        <el-descriptions-item label="参与者ID">{{ view.participantIds.join(', ') }}</el-descriptions-item>
-      </el-descriptions>
+      <div class="dialog-content">
+        <el-descriptions bordered column="1" class="descriptions">
+          <el-descriptions-item label="活动ID">{{ view.id }}</el-descriptions-item>
+          <el-descriptions-item label="活动标题">{{ view.title }}</el-descriptions-item>
+          <el-descriptions-item label="开始时间">{{ formatDateTime(view.startTime) }}</el-descriptions-item>
+          <el-descriptions-item label="结束时间">{{ formatDateTime(view.endTime) }}</el-descriptions-item>
+          <el-descriptions-item label="报名开始时间">{{ formatDateTime(view.registrationStartTime) }}</el-descriptions-item>
+          <el-descriptions-item label="报名结束时间">{{ formatDateTime(view.registrationEndTime) }}</el-descriptions-item>
+          <el-descriptions-item label="活动地点">{{ view.location }}</el-descriptions-item>
+          <el-descriptions-item label="校区">{{ joinCampuses(view.campus) }}</el-descriptions-item>
+          <el-descriptions-item label="费用">{{ view.cost }}</el-descriptions-item>
+          <el-descriptions-item label="活动信息">
+            <div style="white-space: pre-wrap;">{{ view.activityInfo }}</div>
+          </el-descriptions-item>
+          <el-descriptions-item label="当前参与人数">{{ view.currentParticipants }}</el-descriptions-item>
+          <el-descriptions-item label="预计参与人数上限">{{ view.estimatedLimit }}</el-descriptions-item>
+          <el-descriptions-item label="活动状态">{{ formatActivityStatus(view.activityStatus) }}</el-descriptions-item>
+          <el-descriptions-item label="负责人ID">{{ view.leaderIds.join(', ') }}</el-descriptions-item>
+          <el-descriptions-item label="图片" class="activity-images">
+            <div v-for="image in view.adImages" :key="image">
+              <img :src="image" alt="活动图片" style="max-width: 100px; max-height: 100px; margin-right: 10px;">
+            </div>
+          </el-descriptions-item>
+          <el-descriptions-item label="组织细节">{{ view.organizeDetails }}</el-descriptions-item>
+          <el-descriptions-item label="参与者ID">{{ view.participantIds.join(', ') }}</el-descriptions-item>
+        </el-descriptions>
+      </div>
     </el-dialog>
 
   </div>
@@ -153,7 +157,7 @@ import { ElMessage, ElMessageBox } from 'element-plus';
 import { Delete, Edit, Search, Plus, View } from '@element-plus/icons-vue';
 import { axiosForActivity } from '../main.js';
 import{ formatDateTime , joinCampuses,formatActivityStatus} from '@/tools/Format.js'
-// import { fetchData } from '../api/index';
+
 import { onMounted } from 'vue'
 import {
   Iphone,
@@ -207,20 +211,6 @@ const print = ({
 const tableData = ref<TableItem[]>([]);
 
 
-//获取后端数据库的数据
-const fetchData = async () => {
-  try {
-
-    axiosForActivity.get('/api/activity/activities').then(response => {
-      console.log('Response from Service B:', response.data);
-      tableData.value = response.data;
-      console.log(tableData);
-    });
-
-  } catch (error) {
-    console.error(error);
-  }
-};
 
 //表格中展示的数据
 interface TableItem {
@@ -283,21 +273,47 @@ let filteredData = ref<TableItem[]>([]); // 保存筛选的数据
 const editFormRef = ref(null);
 
 // 获取表格数据
-const getData = () => {
-  fetchData();
+// 获取表格数据
+const getData = async () => {
+  try {
+    const response = await axiosForActivity.get('/api/activity/activities/by-page', {
+      params: {
+        page: query.pageIndex - 1, // Spring Data JPA 页码从0开始
+        size: query.pageSize,
+        search: query.value, // 这里是搜索条件，确保后端支持该参数
+        // 可能还有其他过滤条件
+      }
+    });
+
+    // 打印响应数据，便于调试
+    console.log(response.data);
+
+    // 更新表格数据
+    tableData.value = response.data.content; // 当前页的数据在content字段中
+    pageTotal.value = response.data.totalElements; // 总条目数在totalElements字段中
+  } catch (error) {
+    console.error(error);
+  }
 };
+
+
+
 getData();
 
-// 查询操作
-const handleSearch = () => {
-  query.pageIndex = 1;
-  getData();
-};
 // 分页导航
 const handlePageChange = (val: number) => {
   query.pageIndex = val;
   getData();
 };
+
+// 查询操作
+const handleSearch = () => {
+  query.pageIndex = 1; // 从第一页开始显示搜索结果
+  getData();
+};
+
+
+
 const saveDelete = async (index: number) => {
   try {
     const id = tableData.value[index].id;
@@ -462,9 +478,13 @@ const saveEdit = async () => {
   margin-bottom: 20px;
 }
 
-.handle-select {
-  width: 120px;
+.dialog-content {
+  background-color: #f5f5f5; /* 轻微灰色背景 */
+  padding: 15px; /* 内边距 */
+  border-radius: 8px; /* 圆角 */
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* 轻微阴影效果 */
 }
+
 
 .handle-input {
   width: 300px;
@@ -475,51 +495,31 @@ const saveEdit = async () => {
   font-size: 14px;
 }
 
-.red {
-  color: #F56C6C;
-}
-
 .mr10 {
   margin-right: 10px;
 }
 
-.mr11 {
-  width: 150px;
-  margin-right: 10px;
-}
-
-.table-td-thumb {
-  display: block;
-  margin: auto;
-  width: 40px;
-  height: 40px;
-}
-
-.el-descriptions {
-  margin-top: 20px;
-}
-
-.cell-item {
+.descriptions .el-descriptions-item {
   display: flex;
   align-items: center;
+  padding: 10px 0;
 }
 
-.margin-top {
-  margin-top: 20px;
+.descriptions .el-descriptions-item label {
+  font-weight: bold;
+  color: #333;
+  min-width: 150px; /* 确保标签宽度一致 */
+  text-align: right; /* 标签文字右对齐 */
+  margin-right: 16px; /* 标签和内容之间的间距 */
 }
 
-.CollectionImg {
-  float: left;
-  width: 200px;
-  height: 130px;
-  margin: 10px;
-
+.descriptions .el-descriptions-item .content {
+  flex-grow: 1;
+  text-align: left; /* 内容文字左对齐 */
+  color: #666; /* 内容文字颜色 */
 }
-.my-message-box {
-  /* 自定义样式 */
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+.activity-images img {
+  border-radius: 4px;
+  margin-right: 10px;
 }
 </style>
