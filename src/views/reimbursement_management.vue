@@ -30,7 +30,8 @@
 
     <!-- 查看弹出框 -->
     <el-dialog title="查看报销申请" v-model="viewVisible" disabled width="50%">
-      <el-form label-width="90px" disabled>
+      <el-form  label-width="150px" label-position="left" disabled>
+<!--        label-width调整label的宽度-->
         <el-form-item label="申请者ID">
           <el-input v-model="form.applicantId"></el-input>
         </el-form-item>
@@ -46,14 +47,28 @@
         <el-form-item label="状态">
           <el-input v-model="form.status"></el-input>
         </el-form-item>
-
-<!--        <el-form-item label="证明信息1">-->
-<!--          <el-input v-model="form.proofInfo"></el-input>-->
-<!--        </el-form-item>-->
+        <el-form-item label="申请时间">
+          <el-input v-model="form.submitTime"></el-input>
+        </el-form-item>
+        <!--        <el-form-item label="证明信息1">-->
+        <!--          <el-input v-model="form.proofInfo"></el-input>-->
+        <!--        </el-form-item>-->
         <el-form-item label="证明信息">
           <!-- 显示证明信息图片 -->
           <img :src="form.proofInfo" alt="证明信息" style="max-width: 100%; max-height: 300px;" />
         </el-form-item>
+
+        <el-form-item label="财务干事处理时间" v-if="form.financeClerkId">
+          <el-input v-model="form.financeClerkProcessTime"></el-input>
+        </el-form-item>
+        <el-form-item label="社长处理时间" v-if="form.presidentProcessTime">
+          <el-input v-model="form.presidentProcessTime"></el-input>
+        </el-form-item>
+        <el-form-item label="驳回理由" v-if="form.rejectedReason">
+          <el-input v-model="form.rejectedReason"></el-input>
+        </el-form-item>
+
+
 
       </el-form>
       <span slot="footer" class="dialog-footer">
@@ -96,6 +111,11 @@ interface ReimbursementRecord {
   proofInfo: string;
   remark: string;
   status: string;
+  submitTime: string;
+  financeClerkId: number;
+  financeClerkProcessTime: string;
+  presidentProcessTime: string;
+  rejectedReason: string;
 }
 
 const tableData = ref<ReimbursementRecord[]>([]);
@@ -110,7 +130,12 @@ let form = reactive<ReimbursementRecord>({
   amount: 0,
   proofInfo: '',
   remark: '',
-  status: ''
+  status: '',
+  submitTime: '',
+  financeClerkId: null,
+  financeClerkProcessTime: null,
+  presidentProcessTime: null,
+  rejectedReason: null,
 });
 
 // 获取报销申请数据
@@ -136,6 +161,8 @@ const handleView = (row: ReimbursementRecord) => {
 
 const handleApprove = async (row: ReimbursementRecord) => {
   try {
+    const clerkType=localStorage.getItem("clerkType");
+    console.log("clerkType",clerkType);
     // console.log("row:",row);
     // console.log("row.id:",row.id);
     row.status = "APPROVED"

@@ -5,6 +5,7 @@ import axios from "axios";
 import { useUserInfo } from "@/store/userInfo";
 import { ref } from "vue";
 import router from '../router';
+import {axiosForFinance, axiosForFile, axiosForHuman, axiosForActivity} from '../main.js';
 
 const baseUrl = useBaseUrl().baseUrl
 const userInfo = useUserInfo()
@@ -12,19 +13,25 @@ const user_name = ref("")
 const user_password = ref("")
 const login = () => {
   const LoginModel = {
-    "userId": user_name.value,
+    "phoneNumber": user_name.value,
     "password": user_password.value
   }
-  axios.post(baseUrl + '/api/Authenticate/Login', LoginModel)
+  axiosForHuman.get('/api/human_management/clerks/login', {params:LoginModel})
     .then(function (response) {
+      console.log(response);
       userInfo.updateToken(response.data.token)
       userInfo.updateExpireTime(Date(response.data.expiration))
       alert("登录成功！")
       userInfo.updateRole(response.data.role)
       userInfo.updateStaffInfo(response.data.staffInfo)
       router.push(
-          {path:'/', params:{refresh:true}}
+          {path:'/dashboard', params:{refresh:true}}
       );
+      const data = response.data;
+      localStorage.setItem("id",data.id);
+      localStorage.setItem("clerkType",data.clerkType);
+      console.log("data.id",data.id);
+      console.log("clerkType",data.clerkType);
     })
     .catch(function (error) {
       if (error.response) {
@@ -48,8 +55,8 @@ const login = () => {
 <template>
   <div class="page-container">
     <div class="login-container">
-      <h2 class="title">欢迎登录博数管理系统</h2>
-      <el-input v-model="user_name" placeholder="请输入用户名" />
+      <h2 class="title">欢迎登录足迹行者管理系统</h2>
+      <el-input v-model="user_name" placeholder="请输入电话号码" />
       <el-input v-model="user_password" placeholder="请输入密码" type="password"/>
       <el-button @click="login">登录</el-button>
     </div>
