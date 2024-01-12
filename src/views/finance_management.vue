@@ -47,9 +47,19 @@
         <el-form-item label="类型">
           <el-input v-model="form.type"></el-input>
         </el-form-item>
+        <el-form-item label="选择活动">
+          <el-select v-model="addIncomeForm.activityId" placeholder="请选择相关活动">
+            <el-option
+                v-for="activity in activities"
+                :key="activity.id"
+                :label="activity.title"
+                :value="activity.id">
+            </el-option>
+          </el-select>
         <!--        <el-form-item label="活动名称">-->
         <!--          <el-input v-model="form.activityName"></el-input>-->
         <!--        </el-form-item>-->
+        </el-form-item>
         <el-form-item label="金额">
           <el-input v-model="form.amount"></el-input>
         </el-form-item>
@@ -130,6 +140,16 @@
         <el-form-item label="类型" prop="type">
           <el-input v-model="addIncomeForm.type"></el-input>
         </el-form-item>
+        <el-form-item label="选择活动">
+          <el-select v-model="addIncomeForm.activityId" placeholder="请选择相关活动">
+            <el-option
+                v-for="activity in activities"
+                :key="activity.id"
+                :label="activity.title"
+                :value="activity.id">
+            </el-option>
+          </el-select>
+        </el-form-item>
 
         <!-- 金额 -->
         <el-form-item label="金额" prop="amount">
@@ -172,7 +192,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue';
+import {ref, reactive, onMounted} from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import {Delete, Edit, View} from '@element-plus/icons-vue';
 import axios from 'axios';
@@ -219,6 +239,19 @@ const addIncomeForm = reactive({
   officerId: -1, // 根据需要设置
   handlerId: -1, // 根据需要设置
 });
+
+
+const activities = ref([]);
+const fetchActivities = async () => {
+  try {
+    const response = await axiosForActivity.get('/api/activity/activities');
+    activities.value = response.data;
+  } catch (error) {
+    console.error('Error fetching activities:', error);
+  }
+};
+onMounted(fetchActivities);
+
 
 const showAddIncomeDialog = () => {
   addIncomeVisible.value = true;

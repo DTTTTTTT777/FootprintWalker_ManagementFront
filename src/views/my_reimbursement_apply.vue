@@ -22,6 +22,11 @@
             {{ formatDateTime(scope.row.submitTime) }}
           </template>
         </el-table-column>
+        <el-table-column label="活动名称" width="200">
+          <template #default="scope">
+            {{ getActivityName(scope.row.activityId) }}
+          </template>
+        </el-table-column>
         <el-table-column label="操作" width="250" align="center">
           <template #default="scope">
             <div class="custom-button-container" >
@@ -117,7 +122,7 @@
             <el-option
                 v-for="activity in activities"
                 :key="activity.id"
-                :label="activity.name"
+                :label="activity.title"
                 :value="activity.id">
             </el-option>
           </el-select>
@@ -167,7 +172,7 @@
     </el-dialog>
 
     <!-- 新增财务报销 -->
-    <el-dialog title="添加财务收入" v-model="createVisible" width="40%">
+    <el-dialog title="新增财务报销" v-model="createVisible" width="40%">
       <el-form label-width="100px" label-position="left" :model="form" :rules="rules" ref="formRef">
         <!-- 申请者信息 -->
         <!--      <el-form-item label="申请者ID" prop="applicantId">-->
@@ -193,7 +198,7 @@
             <el-option
                 v-for="activity in activities"
                 :key="activity.id"
-                :label="activity.name"
+                :label="activity.title"
                 :value="activity.id">
             </el-option>
           </el-select>
@@ -344,13 +349,19 @@ const getAllReimbursementRecords = async () => {
 };
 const fetchActivities = async () => {
   try {
-    const response = await axiosForActivity.get('/path/to/your/api/activities');
+    const response = await axiosForActivity.get('/api/activity/activities');
     activities.value = response.data;
   } catch (error) {
     console.error('Error fetching activities:', error);
   }
 };
 onMounted(fetchActivities);
+const getActivityName = (activityId) => {
+  console.log("activityId:",activityId);
+  const activity = activities.value.find(a => a.id === activityId);
+  return activity ? activity.title : '未知活动';
+};
+
 
 // 查看报销申请
 const handleView = async (row: ReimbursementRecord) => {

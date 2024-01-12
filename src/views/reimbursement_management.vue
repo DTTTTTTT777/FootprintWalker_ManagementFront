@@ -108,7 +108,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue';
+import {ref, reactive, onMounted} from 'vue';
 import { ElMessage } from 'element-plus';
 import axios from 'axios';
 import {axiosForFinance, axiosForFile, axiosForHuman, axiosForActivity} from '../main.js';
@@ -118,6 +118,17 @@ import {formatDateTime} from '../tools/Format.js'
 const query = reactive({
   searchText: ''
 });
+
+const activities = ref([]);
+const fetchActivities = async () => {
+  try {
+    const response = await axiosForActivity.get('/api/activity/activities');
+    activities.value = response.data;
+  } catch (error) {
+    console.error('Error fetching activities:', error);
+  }
+};
+onMounted(fetchActivities);
 
 interface ReimbursementRecord {
   id: number;
