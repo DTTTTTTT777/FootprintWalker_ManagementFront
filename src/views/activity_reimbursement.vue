@@ -48,13 +48,6 @@
             </div>
           </template>
         </el-table-column>
-        
-        <el-table-column label="活动发起人" align="center">
-          <template #default="scope">
-            {{ getClerkNameById(scope.row.initiatorId) }}
-          </template>
-        </el-table-column>
-
 
         <el-table-column label="活动状态" align="center">
           <template #default="scope">
@@ -69,9 +62,11 @@
         <!-- 操作列 -->
         <el-table-column label="操作" width="400" align="center">
           <template #default="scope">
-            <el-button text :icon="Edit" @click="handleEdit(scope.$index, scope.row)">修改活动</el-button>
-            <el-button text :icon="Delete" @click="handleDelete(scope.$index, scope.row)">删除活动</el-button>
-            <el-button text :icon="View" @click="handleView(scope.$index, scope.row)">查看详情</el-button>
+            <div class="custom-button-container">
+              <el-button @click="handleView(scope.$index,scope.row)">查看</el-button>
+              <el-button type="success" @click="handleApprove(scope.row)">批准</el-button>
+              <el-button type="danger" @click="handleReject(scope.row)">驳回</el-button>
+            </div>
           </template>
         </el-table-column>
       </el-table>
@@ -185,7 +180,7 @@
 import { ref, reactive, computed } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { Delete, Edit, Search, Plus, View } from '@element-plus/icons-vue';
-import { axiosForActivity , axiosForHuman} from '../main.js';
+import {axiosForActivity, axiosForFinance, axiosForHuman} from '../main.js';
 import{ formatDateTime , joinCampuses,formatActivityStatus} from '@/tools/Format.js'
 import { getClerkList } from '@/tools/apiRequest'
 
@@ -290,7 +285,7 @@ function isLastClerkId(id) {
 // 获取表格数据
 const getData = async () => {
   try {
-    const response = await axiosForActivity.get('/api/activity/activities/by-page', {
+    const response = await axiosForActivity.get('/api/activity/activities/pending-review', {
       params: {
         page: query.pageIndex - 1, // Spring Data JPA 页码从0开始
         size: query.pageSize,
@@ -377,40 +372,40 @@ const handleClose = () => {
 
 //表单填写的内容
 let form = reactive({
-    id: 0,
-    title: '',
-    startTime: '',
-    endTime: '',
-    registrationStartTime: '',
-    registrationEndTime: '',
-    location: '',
-    activityInfo: '',
-    activityStatus: '',
-    estimatedLimit: null,
-    leaderIds: [],
-    cost:0,
-    initiatorId: -1,
+  id: 0,
+  title: '',
+  startTime: '',
+  endTime: '',
+  registrationStartTime: '',
+  registrationEndTime: '',
+  location: '',
+  activityInfo: '',
+  activityStatus: '',
+  estimatedLimit: null,
+  leaderIds: [],
+  cost:0,
+  initiatorId: -1,
 });
 //查看的内容
 let view = reactive({
-    id: 0,
-    title: '',
-    startTime: '',
-    endTime: '',
-    campus:[],
-    registrationStartTime: '',
-    registrationEndTime: '',
-    location: '',
-    cost:0,
-    activityInfo: '',
-    activityStatus: '',
-    estimatedLimit: null,
-    currentParticipants:null,
-    organizeDetails: '',
-    adImages:[],
-    participantIds: [],
-    leaderIds: [],
-    initiatorId: -1,
+  id: 0,
+  title: '',
+  startTime: '',
+  endTime: '',
+  campus:[],
+  registrationStartTime: '',
+  registrationEndTime: '',
+  location: '',
+  cost:0,
+  activityInfo: '',
+  activityStatus: '',
+  estimatedLimit: null,
+  currentParticipants:null,
+  organizeDetails: '',
+  adImages:[],
+  participantIds: [],
+  leaderIds: [],
+  initiatorId: -1,
 });
 
 //处理编辑操作
@@ -457,6 +452,47 @@ async function uploadData(submitData) {
     throw error; // 或者返回错误信息，取决于您如何处理这些错误
   }
 }
+
+const handleApprove = async (row: TableItem) => {
+  try {
+    const clerkType=localStorage.getItem("clerkType");
+    console.log("clerkType",clerkType);
+    console.log("row:",row);
+    console.log("row.id:",row.id);
+
+    row.activityStatus =  ActivityStatus.PUBLISHED;
+    // 创建一个请求主体对象，其中包含新的活动状态
+    const requestBody = {
+      activityStatus: "PUBLISHED" // 假设这是您要设置的新状态
+    };
+    await axiosForActivity.put(`/api/activity/activities/${row.id}/status`, requestBody)
+
+    ElMessage.success('申请已批准');
+    getData();
+  } catch (error) {
+    ElMessage.error('操作失败');
+    console.error(error);
+  }
+};
+
+// 显示驳回对话框
+const handleReject = (row: ReimbursementRecord) => {
+  form = { ...row };
+  rejectVisible.value = true;
+};
+
+// 确认驳回
+const confirmReject = async () => {
+  try {
+    await axiosForFinance.put(`/api/finance/reimbursementRequests/${form.id}`, { reason: rejectReason.value });
+    ElMessage.success('申请已驳回');
+    rejectVisible.value = false;
+    getData();
+  } catch (error) {
+    ElMessage.error('操作失败');
+    console.error(error);
+  }
+};
 
 //存储编辑的内容
 const saveEdit = async () => {
