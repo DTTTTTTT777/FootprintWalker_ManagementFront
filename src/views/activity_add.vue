@@ -56,15 +56,8 @@
         <!-- 新增负责人ID输入 -->
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="负责人" prop="leaderIds">
-              <el-select v-model="form.leaderIds" multiple placeholder="请选择负责人">
-                <el-option
-                    v-for="clerk in clerksList"
-                    :key="clerk.id"
-                    :label="clerk.name"
-                    :value="clerk.id">
-                </el-option>
-              </el-select>
+            <el-form-item label="负责人ID" prop="leaderIds" required>
+              <el-input v-model="form.leaderIds" placeholder="输入负责人ID，多个ID以逗号分隔"></el-input>
             </el-form-item>
           </el-col>
         </el-row>
@@ -137,7 +130,6 @@
 import { ref, reactive, computed } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { axiosForActivity } from '../main.js';
-import { getClerkList } from'@/tools/apiRequest.js'
 import { Delete, Edit, Search, Plus } from '@element-plus/icons-vue';
 import {
   Iphone,
@@ -175,8 +167,6 @@ interface TableItem {
   adImages: string[]; // 活动广告图片的URL列表
   organizeDetails: string; // 组织细节
   participantIds: number[]; // 参与者ID列表
-  initiatorId : number; // 活动发起人的用户ID
-
 }
 
 enum ActivityStatus {
@@ -195,7 +185,6 @@ enum CampusData {
 
 const addFormRef = ref(null);
 
-let clerksList =ref([]);
 const form = reactive({
   id: 0, // 初始值为 0，但实际上应由数据库或其他来源生成
   title: '',
@@ -210,12 +199,11 @@ const form = reactive({
   currentParticipants: 0,
   estimatedLimit: 0,
   activityStatus: 'PENDING_REVIEW', // 这应该是 ActivityStatus 枚举的一个值
-  leaderIds: [],
+  leaderIds: [0],
   adImages: [],
   organizeDetails: '',
-  participantIds: [],
-  files: [],
-  initiatorId : -1,
+  participantIds: [0],
+  files: []
 });
 console.log("adImages", form.adImages)
 const handleSuccess = (response, file, fileList) => {
@@ -227,11 +215,7 @@ const handleSuccess = (response, file, fileList) => {
 
   }
 };
-const getData = async () => {
-    clerksList = await getClerkList();
-    console.log(clerksList)
-}
-getData()
+
 const handleError = (err, file, fileList) => {
   // 处理上传失败
   ElMessage.error('图片上传失败');
@@ -286,9 +270,7 @@ const submitForm = async () => {
   try {
 
     form.adImages = form.files.map(file => file.response && file.response.data ? file.response.data.url : null);
-    const id=localStorage.getItem("id");
-    console.log("clerkId",id);
-    form.initiatorId = Number(id);
+
 
     // 假设使用 axios 发送 POST 请求
     // 替换 URL 和 post 数据结构为您的实际需求

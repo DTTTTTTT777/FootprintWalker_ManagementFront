@@ -96,15 +96,6 @@ const routes = [
                 component: () => import('../views/activity_reflextion.vue'),
             },
             {
-                path: '/activity_reimbursement',
-                name: 'activity_reimbursement',
-                meta: {
-                    title: '活动审核',
-                    permiss: [],
-                },
-                component: () => import('../views/activity_reimbursement.vue'),
-            },
-            {
                 path: '/collection_repair',
                 name: 'collection_repair',
                 meta: {

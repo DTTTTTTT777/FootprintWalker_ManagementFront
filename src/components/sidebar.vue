@@ -116,11 +116,6 @@ const items = [
         title: '活动推送管理',
         // permiss: ['CollectionRepair'],
       },
-      {
-        index: '/activity_reimbursement',
-        title: '活动审核',
-        // permiss: ['CollectionRepair'],
-      },
       
     ],
   },

@@ -40,24 +40,12 @@
           </template>
         </el-table-column>
 
-        <!-- 添加负责人名字列 -->
-        <el-table-column label="负责人" align="center">
+        <!-- 添加负责人ID列 -->
+        <el-table-column label="负责人ID" align="center">
           <template #default="scope">
-            <div v-for="id in scope.row.leaderIds" :key="id">
-              {{ getClerkNameById(id) }}
-            </div>
+            <div v-for="id in scope.row.leaderIds" :key="id">{{ id }}</div>
           </template>
         </el-table-column>
-
-        <el-table-column label="活动状态" align="center">
-          <template #default="scope">
-            <el-tag :type="getStatusType(scope.row.activityStatus)">
-              {{ formatActivityStatus(scope.row.activityStatus) }}
-            </el-tag>
-          </template>
-        </el-table-column>
-
-
 
         <!-- 操作列 -->
         <el-table-column label="操作" width="400" align="center">
@@ -115,15 +103,8 @@
         <el-form-item label="人数上限" prop="estimatedLimit">
           <el-input-number v-model="form.estimatedLimit" :min="1" controls-position="right" style="width: 40%;"></el-input-number>
         </el-form-item>
-        <el-form-item label="负责人" prop="leaderIds">
-          <el-select v-model="form.leaderIds" multiple placeholder="请选择负责人">
-            <el-option
-                v-for="clerk in clerksList"
-                :key="clerk.id"
-                :label="clerk.name"
-                :value="clerk.id">
-            </el-option>
-          </el-select>
+        <el-form-item label="负责人ID" prop="leaderIds">
+          <el-input v-model="form.leaderIds" placeholder="请输入负责人ID，多个ID以逗号分隔"></el-input>
         </el-form-item>
         <!-- ...根据需要添加其他表单项... -->
       </el-form>
@@ -154,11 +135,7 @@
           <el-descriptions-item label="当前参与人数">{{ view.currentParticipants }}</el-descriptions-item>
           <el-descriptions-item label="预计参与人数上限">{{ view.estimatedLimit }}</el-descriptions-item>
           <el-descriptions-item label="活动状态">{{ formatActivityStatus(view.activityStatus) }}</el-descriptions-item>
-          <el-descriptions-item label="负责人">
-            <template v-for="id in view.leaderIds" :key="id">
-              {{ getClerkNameById(id) }}<span v-if="!isLastClerkId(id)">, </span>
-            </template>
-          </el-descriptions-item>
+          <el-descriptions-item label="负责人ID">{{ view.leaderIds.join(', ') }}</el-descriptions-item>
           <el-descriptions-item label="图片" class="activity-images">
             <div v-for="image in view.adImages" :key="image">
               <img :src="image" alt="活动图片" style="max-width: 100px; max-height: 100px; margin-right: 10px;">
@@ -178,9 +155,8 @@
 import { ref, reactive, computed } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { Delete, Edit, Search, Plus, View } from '@element-plus/icons-vue';
-import { axiosForActivity , axiosForHuman} from '../main.js';
+import { axiosForActivity } from '../main.js';
 import{ formatDateTime , joinCampuses,formatActivityStatus} from '@/tools/Format.js'
-import { getClerkList } from '@/tools/apiRequest'
 
 import { onMounted } from 'vue'
 import {
@@ -196,7 +172,45 @@ import axios from 'axios'
 import { useUserInfo } from "@/store/userInfo";
 import { useBaseUrl } from "@/store/baseUrl";
 
+function getToken() {
+  // 替换为获取token的逻辑
+  const UserInfo = useUserInfo();
+  return UserInfo.userToken;
+
+}
+
+// 创建一个具有默认头的Axios实例
+const axiosInstance = axios.create({
+  baseURL: 'http://42.192.39.198:5000/api',
+});
+
+const print = ({
+  time: "",
+})
+
+// 拦截器：将token添加到每个请求中
+// axiosInstance.interceptors.request.use((config) => {
+//   const token = getToken();
+//
+//   console.log(token);
+//
+//   if (token) {
+//     if (config.headers) {
+//       config.headers.Authorization = `Bearer ${token}`;
+//     } else {
+//       config.headers = {
+//         Authorization: `Bearer ${token}`,
+//       };
+//     }
+//   }
+//
+//   return config;
+// }, (error) => {
+//   return Promise.reject(error);
+// });
 const tableData = ref<TableItem[]>([]);
+
+
 
 //表格中展示的数据
 interface TableItem {
@@ -217,7 +231,6 @@ interface TableItem {
   adImages: string[]; // 活动广告图片的URL列表
   organizeDetails: string; // 组织细节
   participantIds: number[]; // 参与者ID列表
-  initiatorId : number;
 }
 
 enum ActivityStatus {
@@ -256,30 +269,10 @@ const query = reactive({
 
 const pageTotal = ref(0);
 let filteredData = ref<TableItem[]>([]); // 保存筛选的数据
-let clerksList = ref([])
+
 const editFormRef = ref(null);
 
-// 根据ID获取负责人的名字的方法
-// 从ID映射到名字的计算属性
-const clerksMap = computed(() => {
-  const map = {};
-  console.log(clerksList)
-  clerksList.forEach(clerk => {
-    map[clerk.id] = clerk.name;
-  });
-  return map;
-});
-
-// 根据ID获取负责人的名字的方法
-function getClerkNameById(id) {
-  return clerksMap.value[id] || '未知'; // 如果找不到ID，则返回'未知'
-}
-
-// 检查是否是最后一个ID，以避免在列表末尾添加逗号
-function isLastClerkId(id) {
-  return view.leaderIds.indexOf(id) === view.leaderIds.length - 1;
-}
-
+// 获取表格数据
 // 获取表格数据
 const getData = async () => {
   try {
@@ -291,19 +284,12 @@ const getData = async () => {
         // 可能还有其他过滤条件
       }
     });
-    clerksList = await getClerkList()
-
 
     // 打印响应数据，便于调试
     console.log(response.data);
-    console.log(clerksList);
 
-    tableData.value = response.data.content.map(activity => {
-      // 将 participantIds 数组长度设置为 currentParticipants
-      activity.currentParticipants = activity.participantIds.length;
-      return activity;
-    });
     // 更新表格数据
+    tableData.value = response.data.content; // 当前页的数据在content字段中
     pageTotal.value = response.data.totalElements; // 总条目数在totalElements字段中
   } catch (error) {
     console.error(error);
@@ -313,8 +299,6 @@ const getData = async () => {
 
 
 getData();
-
-
 
 // 分页导航
 const handlePageChange = (val: number) => {
@@ -381,8 +365,7 @@ let form = reactive({
     activityStatus: '',
     estimatedLimit: null,
     leaderIds: [],
-    cost:0,
-    initiatorId: -1,
+    cost:0
 });
 //查看的内容
 let view = reactive({
@@ -403,7 +386,6 @@ let view = reactive({
     adImages:[],
     participantIds: [],
     leaderIds: [],
-    initiatorId: -1,
 });
 
 //处理编辑操作
@@ -422,6 +404,7 @@ const handleView = (index: number, row: any) => {
   //将目前表格中的内容先同步到编辑框内
   Object.assign(view, row);
   viewVisible.value = true;
+  console.log(viewVisible.value)
   idx = index;
 };
 
@@ -481,21 +464,6 @@ const saveEdit = async () => {
 
 };
 
-// 根据活动状态返回对应的 el-tag 类型
-function getStatusType(status) {
-  switch (status) {
-    case 'PUBLISHED':
-      return 'success'; // 绿色
-    case 'DRAFT':
-      return 'info'; // 蓝色
-    case 'PENDING_REVIEW':
-      return 'warning'; // 黄色
-    case 'RETROSPECTIVE':
-      return 'danger'; // 红色
-    default:
-      return 'default'; // 默认灰色
-  }
-}
 
 
 
