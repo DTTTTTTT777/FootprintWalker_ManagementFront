@@ -5,6 +5,7 @@
       <div class="handle-box">
         <el-input v-model="query.searchText" placeholder="搜索申请" class="handle-input-narrow mr10"></el-input>
         <el-button type="primary" @click="handleSearch">搜索</el-button>
+        <el-button type="primary" @click="showCreateDialog">新增报销申请</el-button>
       </div>
 
       <!-- 表格显示报销申请 -->
@@ -25,7 +26,6 @@
           <template #default="scope">
             <div class="custom-button-container" >
               <el-button @click="handleView(scope.row)">查看详情</el-button>
-<!--              <el-button @click="handleResubmit(scope.row)">重新提交</el-button>-->
               <el-button v-if="scope.row.status === '已驳回'" @click="handleResubmit(scope.row)">重新提交</el-button>
             </div>
           </template>
@@ -112,6 +112,17 @@
           </el-select>
         </el-form-item>
 
+        <el-form-item label="选择活动">
+          <el-select v-model="form.activityId" placeholder="请选择相关活动">
+            <el-option
+                v-for="activity in activities"
+                :key="activity.id"
+                :label="activity.name"
+                :value="activity.id">
+            </el-option>
+          </el-select>
+        </el-form-item>
+
         <!-- 报销金额 -->
         <el-form-item label-width="100px" class = "handle-input-amount" label="金额" prop="amount">
           <el-input v-model="form.amount" label="金额"></el-input>
@@ -139,13 +150,13 @@
         </el-form-item>
 
         <!-- 备注 -->
-        <el-form-item label-width="100px" class = "handle-input" label="备注">
+        <el-form-item label-width="100px" class = "handle-input" label="备注" prop="remark">
           <el-input v-model="form.remark" type="textarea"></el-input>
         </el-form-item>
 
         <!-- 提交按钮 -->
-<!--        <el-form-item>-->
-<!--        </el-form-item>-->
+        <!--        <el-form-item>-->
+        <!--        </el-form-item>-->
       </el-form>
 
       <span slot="footer" class="dialog-footer">
@@ -155,11 +166,86 @@
   </span>
     </el-dialog>
 
+    <!-- 新增财务报销 -->
+    <el-dialog title="添加财务收入" v-model="createVisible" width="40%">
+      <el-form label-width="100px" label-position="left" :model="form" :rules="rules" ref="formRef">
+        <!-- 申请者信息 -->
+        <!--      <el-form-item label="申请者ID" prop="applicantId">-->
+        <!--        <el-input v-model="form.applicantId"></el-input>-->
+        <!--      </el-form-item>-->
+
+        <!-- 支出类型 -->
+        <el-form-item label-width="100px" class = "handle-select" label="支出类型" prop="expenseType">
+          <el-select v-model="form.expenseType" placeholder="请选择支出类型">
+            <el-option label="交通费" value="交通费"></el-option>
+            <el-option label="住宿费" value="住宿费"></el-option>
+            <el-option label="餐费" value="餐费"></el-option>
+            <el-option label="保险费" value="保险费"></el-option>
+            <el-option label="景点门票费" value="景点门票费"></el-option>
+            <el-option label="活动费" value="活动费"></el-option>
+            <el-option label="其他" value="其他"></el-option>
+            <!-- 更多选项 -->
+          </el-select>
+        </el-form-item>
+
+        <el-form-item label="选择活动">
+          <el-select v-model="form.activityId" placeholder="请选择相关活动">
+            <el-option
+                v-for="activity in activities"
+                :key="activity.id"
+                :label="activity.name"
+                :value="activity.id">
+            </el-option>
+          </el-select>
+        </el-form-item>
+
+
+        <!-- 报销金额 -->
+        <el-form-item label-width="100px" class = "handle-input-amount" label="金额" prop="amount">
+          <el-input v-model="form.amount" label="金额"></el-input>
+        </el-form-item>
+
+        <!-- 证明信息 -->
+        <el-form-item label-width="100px" class = "handle-input" label="证明信息" prop="proofInfo">
+          <!--        <el-input v-model="form.proofInfo" type="textarea"></el-input>-->
+          <el-upload v-model:file-list="fileList" class="upload-demo" multiple="false"
+                     action="/foreignImage/upload" name="smfile"
+                     :headers="{ Authorization: '36BZaEnY8eVdNuWGWhg0LgmSHByiHEGP' }"
+                     :on-success="handleSuccess"
+                     :on-error="handleError"
+                     :before-upload="beforeUpload"
+                     :limit="1"
+                     :on-exceed="handleExceed"
+                     prop="proofInfo">
+
+            <el-button size="small" type="primary">点击上传</el-button>
+          </el-upload>
+          <!-- 显示已上传的图片 -->
+          <el-image v-if="form.proofInfo" class="CollectionImg" :src="form.proofInfo"
+                    :z-index="10" :height="10">
+          </el-image>
+        </el-form-item>
+
+        <!-- 备注 -->
+        <el-form-item label-width="100px" class = "handle-input" label="备注">
+          <el-input v-model="form.remark" type="textarea"></el-input>
+        </el-form-item>
+
+      </el-form>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button type="primary" @click="submitCreateForm">添加</el-button>
+          <el-button @click="createVisible = false">取消</el-button>
+          <el-button @click="resetForm">重置</el-button>
+        </span>
+      </template>
+    </el-dialog>
+
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive,watchEffect } from 'vue';
+import { ref, reactive,watchEffect,onMounted } from 'vue';
 import { ElMessage } from 'element-plus';
 import axios from 'axios';
 import {axiosForFinance, axiosForFile, axiosForHuman, axiosForActivity} from '../main.js';
@@ -173,6 +259,7 @@ const query = reactive({
 interface ReimbursementRecord {
   id: number;
   applicantId: number;
+  activityId: number;
   expenseType: string;
   amount: number;
   proofInfo: string;
@@ -189,9 +276,11 @@ interface ReimbursementRecord {
 const tableData = ref<ReimbursementRecord[]>([]);
 const viewVisible = ref(false);
 const reEditVisible = ref(false);
+const createVisible = ref(false);
 const rejectVisible = ref(false);
 const rejectReason = ref('');
 const fileList = ref([]);
+const activities = ref([]);
 
 const rules = {
   applicantId: [{ required: true, message: '请输入申请者ID', trigger: 'blur' }],
@@ -200,12 +289,33 @@ const rules = {
   proofInfo: [{ required: true, message: '请输入证明信息', trigger: 'blur' }],
 };
 
+const showCreateDialog = () => {
+    // 重置 form 对象
+    form = reactive<ReimbursementRecord>({
+      id: 0,
+      applicantId: 0,
+      activityId: null,
+      expenseType: '',
+      amount: null,
+      proofInfo: '',
+      remark: '',
+      status: '待处理',
+      submitTime: '',
+      presidentId: null,
+      financeClerkId: null,
+      financeClerkProcessTime: null,
+      presidentProcessTime: null,
+      rejectReason: null,
+    });
+  createVisible.value = true;
+};
 
 const formRef = ref(null);
 
 let form = reactive<ReimbursementRecord>({
   id: 0,
   applicantId: 0,
+  activityId: null,
   expenseType: '',
   amount: 0,
   proofInfo: '',
@@ -232,6 +342,15 @@ const getAllReimbursementRecords = async () => {
     console.error(error);
   }
 };
+const fetchActivities = async () => {
+  try {
+    const response = await axiosForActivity.get('/path/to/your/api/activities');
+    activities.value = response.data;
+  } catch (error) {
+    console.error('Error fetching activities:', error);
+  }
+};
+onMounted(fetchActivities);
 
 // 查看报销申请
 const handleView = async (row: ReimbursementRecord) => {
@@ -249,6 +368,7 @@ const handleResubmit = async (row: ReimbursementRecord) => {
   console.log("handleEdit-form:", form);
   console.log("handleEdit-form.status:", form.status);
   console.log("handleEdit-form.proof:", form.proofInfo);
+  console.log("handleEdit-form.remark:", form.remark);
   // await nextTick(); // 确保视图更新完成
   if (form.proofInfo) {
     fileList.value = [{
@@ -278,6 +398,7 @@ const handleSearch = () => {
 getAllReimbursementRecords();
 
 const submitForm = () => {
+  console.log("submit-handleEdit-form.remark:", form.remark);
   formRef.value.validate(async (valid) => {
     if (valid) {
       // 表单验证通过，发送POST请求创建报销申请
@@ -288,7 +409,16 @@ const submitForm = () => {
   });
 };
 
-
+const submitCreateForm = () => {
+  formRef.value.validate(async (valid) => {
+    if (valid) {
+      // 表单验证通过，发送POST请求创建报销申请
+      await createReimbursementRequest();
+    } else {
+      console.log('表单验证失败');
+    }
+  });
+};
 
 const resetForm = () => {
   formRef.value.resetFields();
@@ -301,12 +431,13 @@ const resubmitReimbursementRequest = async () => {
     form.applicantId = Number(clerkId);
     console.log(clerkId);
     console.log(form.applicantId);
-    const response = await axiosForFinance.put(`http://localhost:6547/api/finance/reimbursementRequests/${form.id}/resubmit`, form);
+    console.log("resubmit-handleEdit-form.remark:", form.remark);
+    const response = await axiosForFinance.put(`api/finance/reimbursementRequests/${form.id}/resubmit`, form);
     if (response.status === 200) {
       // 请求成功，可以处理成功后的逻辑，例如清空表单等
       alert('报销申请已成功提交');
       resetForm();
-      getAllReimbursementRecords();
+      window.location.reload(); // 强制刷新页面
     } else {
       // 请求失败，处理失败逻辑
       alert('报销申请提交失败');
@@ -317,6 +448,29 @@ const resubmitReimbursementRequest = async () => {
   }
 };
 
+const createReimbursementRequest = async () => {
+  try {
+    form.submitTime = new Date().toISOString();
+    const clerkId=localStorage.getItem('id');
+    form.applicantId = Number(clerkId);
+    console.log(clerkId);
+    console.log(form.applicantId);
+    console.log("form:",form);
+    const response = await axiosForFinance.post('api/finance/reimbursementRequests', form);
+    if (response.status === 200) {
+      // 请求成功，可以处理成功后的逻辑，例如清空表单等
+      alert('报销申请已成功提交');
+      resetForm();
+      window.location.reload(); // 强制刷新页面
+    } else {
+      // 请求失败，处理失败逻辑
+      alert('报销申请提交失败');
+    }
+  } catch (error) {
+    console.error('发生错误:', error);
+    alert('报销申请提交失败');
+  }
+};
 
 
 const handleSuccess = (response, file) => {
@@ -364,7 +518,7 @@ const handleExceed = (files, uploadFiles) => {
 }
 
 .handle-input {
-  //width: 500px;
+//width: 500px;
   margin-right: 10px;
 }
 .handle-input-amount,.handle-input-narrow {

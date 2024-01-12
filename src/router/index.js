@@ -67,6 +67,15 @@ const routes = [
                 },
                 component: () => import('../views/reimbursement_apply.vue'),
             },
+            {
+                path: '/my_reimbursement_apply',
+                name: 'my_reimbursement_apply',
+                meta: {
+                    title: '我的报销申请',
+                    permiss: [],
+                },
+                component: () => import('../views/my_reimbursement_apply.vue'),
+            },
 
             {
                 path: '/dashboard',
