@@ -138,7 +138,6 @@ import { Delete, Edit, Search, Plus, View } from '@element-plus/icons-vue';
 import {axiosForActivity, axiosForFinance, axiosForHuman} from '../main.js';
 import{ formatDateTime , joinCampuses,formatActivityStatus ,getStatusType} from '@/tools/Format.js'
 import { getClerkList } from '@/tools/apiRequest'
-
 import { onMounted } from 'vue'
 import {
   Iphone,
@@ -242,13 +241,14 @@ function isLastClerkId(id) {
 // 获取表格数据
 const getData = async () => {
   try {
-    const response = await axiosForActivity.get('/api/activity/activities/pending-review', {
+    const response = await axiosForActivity.get('/api/activity/activities/status', {
       params: {
+        statuses: 'PENDING_REVIEW',
         page: query.pageIndex - 1, // Spring Data JPA 页码从0开始
         size: query.pageSize,
         search: query.value, // 这里是搜索条件，确保后端支持该参数
         // 可能还有其他过滤条件
-      }
+      },
     });
     clerksList = await getClerkList()
 
