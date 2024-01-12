@@ -9,6 +9,7 @@
         </el-select>
         <el-input v-model="query.activityName" placeholder="关联活动" class="handle-input mr10"></el-input>
         <el-button type="primary" @click="handleSearch">搜索</el-button>
+        <el-button type="primary" @click="showAddIncomeDialog">新增财务收入</el-button>
       </div>
       <el-table :data="tableData" border class="table" ref="financialTable">
         <el-table-column prop="id" label="ID" width="55" align="center"></el-table-column>
@@ -54,6 +55,7 @@
         </el-form-item>
         <el-form-item label="凭证信息">
           <el-input v-model="form.proofInfo"></el-input>
+          <img :src="form.proofInfo" alt="证明信息" style="max-width: 100%; max-height: 300px;" />
         </el-form-item>
         <el-form-item label="备注">
           <el-input v-model="form.remark"></el-input>
@@ -91,9 +93,10 @@
         <el-form-item label="金额">
           <el-input v-model="form.amount"></el-input>
         </el-form-item>
-        <el-form-item label="凭证信息">
-          <el-input v-model="form.proofInfo"></el-input>
-        </el-form-item>
+        <el-form-item label="证明信息">
+        <!-- 显示证明信息图片 -->
+        <img :src="form.proofInfo" alt="证明信息" style="max-width: 100%; max-height: 300px;" />
+      </el-form-item>
         <el-form-item label="备注">
           <el-input v-model="form.remark"></el-input>
         </el-form-item>
@@ -112,6 +115,58 @@
         </span>
       </template>
     </el-dialog>
+
+    <!-- 添加收入弹出框 -->
+    <el-dialog title="添加财务收入" v-model="addIncomeVisible" width="40%">
+      <el-form label-width="90px" :model="addIncomeForm" ref="addIncomeFormRef">
+        <!-- 支出类型 -->
+<!--        <el-form-item label="财务类型" prop="financeType">-->
+<!--          <el-select v-model="addIncomeForm.financeType" placeholder="请选择财务类型">-->
+<!--            <el-option label="收入" value="INCOME"></el-option>-->
+<!--          </el-select>-->
+<!--        </el-form-item>-->
+
+        <!-- 类型 -->
+        <el-form-item label="类型" prop="type">
+          <el-input v-model="addIncomeForm.type"></el-input>
+        </el-form-item>
+
+        <!-- 金额 -->
+        <el-form-item label="金额" prop="amount">
+          <el-input v-model.number="addIncomeForm.amount" type="number"></el-input>
+        </el-form-item>
+
+        <!-- 证明信息 -->
+        <el-form-item label="证明信息" prop="proofInfo">
+          <el-upload v-model:file-list="addIncomeFileList" class="upload-demo" multiple="false"
+                     action="/foreignImage/upload" name="smfile"
+                     :headers="{ Authorization: '36BZaEnY8eVdNuWGWhg0LgmSHByiHEGP' }"
+                     :on-success="handleAddIncomeSuccess"
+                     :on-error="handleAddIncomeError"
+                     :before-upload="beforeAddIncomeUpload"
+                     :limit="1"
+                     :on-exceed="handleAddIncomeExceed"
+                     prop="proofInfo">
+            <el-button size="small" type="primary">点击上传</el-button>
+          </el-upload>
+          <el-image v-if="addIncomeForm.proofInfo" class="CollectionImg" :src="addIncomeForm.proofInfo"
+                    :z-index="10" :height="100">
+          </el-image>
+        </el-form-item>
+
+        <!-- 备注 -->
+        <el-form-item label="备注" prop="remark">
+          <el-input v-model="addIncomeForm.remark" type="textarea"></el-input>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="addIncomeVisible = false">取消</el-button>
+          <el-button type="primary" @click="submitAddIncomeForm">添加</el-button>
+        </span>
+      </template>
+    </el-dialog>
+
 
   </div>
 </template>
@@ -149,6 +204,50 @@ interface FinancialRecord {
 
 const tableData = ref<FinancialRecord[]>([]);
 const pageTotal = ref(0);
+
+const addIncomeVisible = ref(false);
+const addIncomeFormRef = ref(null);
+const addIncomeForm = reactive({
+  // 初始化添加财务收入表单的数据结构
+  // 类似于报销申请的表单
+  financeType: 'INCOME',
+  activityId: 0,
+  type: '',
+  amount: null,
+  proofInfo: '',
+  remark: '',
+  officerId: -1, // 根据需要设置
+  handlerId: -1, // 根据需要设置
+});
+
+const showAddIncomeDialog = () => {
+  addIncomeVisible.value = true;
+};
+const submitAddIncomeForm = async () => {
+  // 表单验证逻辑
+  addIncomeFormRef.value.validate(async (valid) => {
+    if (valid) {
+      try {
+        addIncomeForm.officerId = addIncomeForm.handlerId = Number(localStorage.getItem('id'));
+        // 发送 POST 请求创建新的财务收入记录
+        const response = await axiosForFinance.post('/api/finance/financialRecords', addIncomeForm);
+        console.log(response);
+        if (response.status === 200 || response.status === 201) {
+          ElMessage.success('财务收入添加成功');
+          addIncomeVisible.value = false;
+          getAllFinancialRecords(); // 重新获取财务记录
+        } else {
+          ElMessage.error('财务收入添加失败');
+        }
+      } catch (error) {
+        console.error('添加财务收入出错:', error);
+        ElMessage.error('财务收入添加失败');
+      }
+    } else {
+      console.log('表单验证失败');
+    }
+  });
+};
 
 // 示例函数，根据 ID 获取名字
 const getClerkNameById = async (id) => {
@@ -320,6 +419,40 @@ const saveEdit = async () => {
     console.error(error);
   }
 };
+
+const addIncomeFileList = ref([]);
+
+// 处理上传成功
+const handleAddIncomeSuccess = (response, file) => {
+  console.log('上传成功', response);
+
+  if(response.success == true)
+    addIncomeForm.proofInfo = response.data.url;
+  else
+    addIncomeForm.proofInfo = response.images;
+
+  console.log(addIncomeForm.proofInfo);
+
+  // window.location.reload(); // 强制刷新页面
+};
+
+// 处理上传失败
+const handleAddIncomeError = (err) => {
+  console.error('上传失败', err);
+  ElMessage.error('上传失败');
+};
+
+// 上传之前的处理
+const beforeAddIncomeUpload = (file) => {
+  // 您可以在此添加文件类型或大小检查
+  return true; // 返回true表示继续上传，返回false表示取消上传
+};
+
+// 超出上传限制处理
+const handleAddIncomeExceed = (files, uploadFiles) => {
+  ElMessage.warning(`只能上传一个文件`);
+};
+
 </script>
 
 <style scoped>
@@ -349,5 +482,10 @@ const saveEdit = async () => {
 
 .red {
   color: red;
+}
+.CollectionImg {
+  margin-top: 10px;
+  max-height: 100px;
+  border: 1px solid #ddd;
 }
 </style>

@@ -39,6 +39,36 @@
             </el-form-item>
           </el-col>
         </el-row>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="校区选择" prop="campus" required>
+              <el-select v-model="form.campus" multiple placeholder="选择校区">
+                <el-option label="四平路校区" value="四平路校区"></el-option>
+                <el-option label="嘉定校区" value="嘉定校区"></el-option>
+                <el-option label="沪西校区" value="沪西校区"></el-option>
+                <el-option label="沪北校区" value="沪北校区"></el-option>
+                <!-- 添加其他校区选项 -->
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <!-- 新增负责人ID输入 -->
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="负责人" prop="leaderIds">
+              <el-select v-model="form.leaderIds" multiple placeholder="请选择负责人">
+                <el-option
+                    v-for="clerk in clerksList"
+                    :key="clerk.id"
+                    :label="clerk.name"
+                    :value="clerk.id">
+                </el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
+
       </div>
 
       <!-- 图片上传区域 -->
@@ -107,6 +137,7 @@
 import { ref, reactive, computed } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { axiosForActivity } from '../main.js';
+import { getClerkList } from'@/tools/apiRequest.js'
 import { Delete, Edit, Search, Plus } from '@element-plus/icons-vue';
 import {
   Iphone,
@@ -144,6 +175,8 @@ interface TableItem {
   adImages: string[]; // 活动广告图片的URL列表
   organizeDetails: string; // 组织细节
   participantIds: number[]; // 参与者ID列表
+  initiatorId : number; // 活动发起人的用户ID
+
 }
 
 enum ActivityStatus {
@@ -162,6 +195,7 @@ enum CampusData {
 
 const addFormRef = ref(null);
 
+let clerksList =ref([]);
 const form = reactive({
   id: 0, // 初始值为 0，但实际上应由数据库或其他来源生成
   title: '',
@@ -176,11 +210,12 @@ const form = reactive({
   currentParticipants: 0,
   estimatedLimit: 0,
   activityStatus: 'PENDING_REVIEW', // 这应该是 ActivityStatus 枚举的一个值
-  leaderIds: [0],
+  leaderIds: [],
   adImages: [],
   organizeDetails: '',
-  participantIds: [0],
-  files: []
+  participantIds: [],
+  files: [],
+  initiatorId : -1,
 });
 console.log("adImages", form.adImages)
 const handleSuccess = (response, file, fileList) => {
@@ -192,7 +227,11 @@ const handleSuccess = (response, file, fileList) => {
 
   }
 };
-
+const getData = async () => {
+    clerksList = await getClerkList();
+    console.log(clerksList)
+}
+getData()
 const handleError = (err, file, fileList) => {
   // 处理上传失败
   ElMessage.error('图片上传失败');
@@ -245,6 +284,12 @@ const submitForm = async () => {
 
   // 提交表单数据
   try {
+
+    form.adImages = form.files.map(file => file.response && file.response.data ? file.response.data.url : null);
+    const id=localStorage.getItem("id");
+    console.log("clerkId",id);
+    form.initiatorId = Number(id);
+
     // 假设使用 axios 发送 POST 请求
     // 替换 URL 和 post 数据结构为您的实际需求
     const response = await axiosForActivity.post('/api/activity/activities', form);

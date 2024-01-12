@@ -91,6 +91,11 @@ const items = [
         title: '报销申请',
         // permiss: ['Archaeologist'],
       },
+      {
+        index: '/my_reimbursement_apply',
+        title: '我的报销申请',
+        // permiss: ['Archaeologist'],
+      },
     ]
   },
 
@@ -114,6 +119,11 @@ const items = [
       {
         index: '/activity_reflextion',
         title: '活动推送管理',
+        // permiss: ['CollectionRepair'],
+      },
+      {
+        index: '/activity_reimbursement',
+        title: '活动审核',
         // permiss: ['CollectionRepair'],
       },
       
