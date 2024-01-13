@@ -135,68 +135,68 @@ const items = [
     title: '人事管理',
     // permiss: ['StaffAdmin'],
   },
-  {
-    icon: 'more',
-    index: '2',
-    title: '展厅',
-    // permiss: ['ExhibitionHallAdmin','SystemAdmin'],
-    subs: [
-      {
-        index: '/table',
-        title: '展厅信息',
-        // permiss: ['ExhibitionHallAdmin','SystemAdmin'],
-      },
-      {
-        index: '/collections',
-        title: '展品详情',
-        // permiss: ['ExhibitionHallAdmin',"SystemAdmin"],
-      },
-
-    ],
-  },
-  {
-    icon: 'lock',
-    index:'storage',
-    title:'仓库管理',
-    // permiss:['WarehouseAdmin',"SystemAdmin"],
-  },
-  {
-    icon: 'Calendar',
-    index: '3',
-    title: '日常信息',
-    // permiss: ["RoutineAdmin", "SystemAdmin"],
-    subs:[
-      {
-        index: '/activity',
-        title: '活动',
-        // permiss: ['RoutineAdmin',"SystemAdmin"],
-      },
-      {
-        index: '/statistics',
-        title: '门票信息',
-        // permiss: ["RoutineAdmin", "SystemAdmin"],
-      }
-    ]
-  },
-  {
-    icon:'EditPen',
-    index:'/feedbacks',
-    title:'反馈信息管理',
-    // permiss: ["FeedbackAdmin", "SystemAdmin"],
-  },
-  {
-    icon:'Present',
-    index:'/products',
-    title:'文创产品信息管理',
-    // permiss:['ProductAdmin',"SystemAdmin"],
-  },
-  
-  {
-    icon: "rank",
-    index: "/ccard",
-    title: "个人中心",
-    // permiss: ['User',"SystemAdmin"],
-  },
+  // {
+  //   icon: 'more',
+  //   index: '2',
+  //   title: '展厅',
+  //   // permiss: ['ExhibitionHallAdmin','SystemAdmin'],
+  //   subs: [
+  //     {
+  //       index: '/table',
+  //       title: '展厅信息',
+  //       // permiss: ['ExhibitionHallAdmin','SystemAdmin'],
+  //     },
+  //     {
+  //       index: '/collections',
+  //       title: '展品详情',
+  //       // permiss: ['ExhibitionHallAdmin',"SystemAdmin"],
+  //     },
+  //
+  //   ],
+  // },
+  // {
+  //   icon: 'lock',
+  //   index:'storage',
+  //   title:'仓库管理',
+  //   // permiss:['WarehouseAdmin',"SystemAdmin"],
+  // },
+  // {
+  //   icon: 'Calendar',
+  //   index: '3',
+  //   title: '日常信息',
+  //   // permiss: ["RoutineAdmin", "SystemAdmin"],
+  //   subs:[
+  //     {
+  //       index: '/activity',
+  //       title: '活动',
+  //       // permiss: ['RoutineAdmin',"SystemAdmin"],
+  //     },
+  //     {
+  //       index: '/statistics',
+  //       title: '门票信息',
+  //       // permiss: ["RoutineAdmin", "SystemAdmin"],
+  //     }
+  //   ]
+  // },
+  // {
+  //   icon:'EditPen',
+  //   index:'/feedbacks',
+  //   title:'反馈信息管理',
+  //   // permiss: ["FeedbackAdmin", "SystemAdmin"],
+  // },
+  // {
+  //   icon:'Present',
+  //   index:'/products',
+  //   title:'文创产品信息管理',
+  //   // permiss:['ProductAdmin',"SystemAdmin"],
+  // },
+  //
+  // {
+  //   icon: "rank",
+  //   index: "/ccard",
+  //   title: "个人中心",
+  //   // permiss: ['User',"SystemAdmin"],
+  // },
  
 ];
 

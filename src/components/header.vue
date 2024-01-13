@@ -9,7 +9,7 @@
 		</div>
 
 		<!-- 标题 -->
-		<div class="logo">博数 Museumizer</div>
+		<div class="logo">足迹行者管理系统</div>
 
 		<!-- 顶部右边的东西 -->
 		<div class="header-right">
