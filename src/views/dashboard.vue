@@ -1,30 +1,31 @@
 <template>
 	<div>
-		<el-row :gutter="20">
-			<!-- <el-col :span="8">
-				<el-card shadow="hover" class="mgb20" style=" height: 220px">
-					<div class="user-info">
-						<el-avatar :size="100" :src="imgurl" />
-						<div class="user-info-cont">
-							<div class="user-info-name">{{ name }}</div>
-							<div>{{ role }}</div>
-						</div>
-					</div>
-					<div class="user-info-list">
-						上次登录时间：
-						<span>{{ new Date().toDateString() }}</span>
-					</div>
-					<div class="user-info-list">
-						上次登录地点：
-						<span>深圳</span>
-					</div>
-				</el-card>
-			</el-col> -->
-			<el-col :span="8"><onsitestatistics :onSet="IOInfo.inMuseumCount - IOInfo.outMuseumCount"></onsitestatistics></el-col>
-			<el-col :span="8"><ticketsstatistics :total-tickets="TicketsInfo.totalTickets" :sold-tickets="TicketsInfo.soldTickets"></ticketsstatistics></el-col>
-		</el-row>
-		<el-row><iostatistics :inData="IOInfo.inMuseumCount" :outData="IOInfo.outMuseumCount"></iostatistics></el-row>
-		
+<!--		<el-row :gutter="20">-->
+<!--			&lt;!&ndash; <el-col :span="8">-->
+<!--				<el-card shadow="hover" class="mgb20" style=" height: 220px">-->
+<!--					<div class="user-info">-->
+<!--						<el-avatar :size="100" :src="imgurl" />-->
+<!--						<div class="user-info-cont">-->
+<!--							<div class="user-info-name">{{ name }}</div>-->
+<!--							<div>{{ role }}</div>-->
+<!--						</div>-->
+<!--					</div>-->
+<!--					<div class="user-info-list">-->
+<!--						上次登录时间：-->
+<!--						<span>{{ new Date().toDateString() }}</span>-->
+<!--					</div>-->
+<!--					<div class="user-info-list">-->
+<!--						上次登录地点：-->
+<!--						<span>深圳</span>-->
+<!--					</div>-->
+<!--				</el-card>-->
+<!--			</el-col> &ndash;&gt;-->
+<!--			<el-col :span="8"><onsitestatistics :onSet="IOInfo.inMuseumCount - IOInfo.outMuseumCount"></onsitestatistics></el-col>-->
+<!--			<el-col :span="8"><ticketsstatistics :total-tickets="TicketsInfo.totalTickets" :sold-tickets="TicketsInfo.soldTickets"></ticketsstatistics></el-col>-->
+<!--		</el-row>-->
+<!--		<el-row><iostatistics :inData="IOInfo.inMuseumCount" :outData="IOInfo.outMuseumCount"></iostatistics></el-row>-->
+<!--		-->
+  <div>欢迎光临足迹行者管理系统！</div>
 	</div>
 </template>
 
