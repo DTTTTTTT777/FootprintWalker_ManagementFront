@@ -178,10 +178,10 @@
             </el-upload>
             <div class="image-preview" v-if="form.adImages.length > 0">
               <el-image
-                  v-for="(image, index) in form.files"
+                  v-for="(image, index) in form.adImages"
                   :key="index"
                   class="collection-img"
-                  :src="image.response.data.url"
+                  :src="image"
                   :fit="'cover'">
               </el-image>
             </div>
@@ -495,16 +495,18 @@ let view = reactive({
 
 
 console.log("adImages", form.adImages)
-const handleSuccess = (response, file, fileList) => {
-  // 处理上传成功
-  if(response.code == "success") {
-    console.log(1)
-    form.adImages.push(response.data.url);
-  }
-  else
-  {
 
-  }
+const handleSuccess = (response, file) => {
+  // 处理上传成功后的回调
+  console.log('上传成功', response);
+
+  console.log(response.success);
+  if(response.success == true)
+    form.adImages.push(response.data.url);
+  else
+    form.adImages.push(response.images);
+  console.log(form.adImages);
+  // 在回调中处理SM.MS返回的数据，可以获取图片链接等信息
 };
 const getClerkData = async () => {
     clerksList = await getClerkList();
