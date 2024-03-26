@@ -60,37 +60,39 @@
 </template>
 
 <script>
+import { ref} from 'vue';
+import { getClerkList } from'@/tools/apiRequest.js'
+import { axiosForActivity } from '../main.js';
 export default {
   name: 'EditActivityDialog',
   props: {
-    activityData: Object
+    activityData: Object,
   },
   data() {
     return {
       editVisible: false,
       form: {}, // 初始化为空对象
-      editFormRef: null
+      editFormRef: null,
+      clerksList:[]
+
     };
   },
-  watch: {
-    // 监听 activityData 的变化，以更新表单数据
-    activityData: {
-      deep: true,
-      handler(newValue) {
-        this.form = { ...newValue };
-      }
-    }
+
+  mounted() {
+    this.openDialog();
+    this.clerksList = getClerkList();
   },
   methods: {
     openDialog() {
       this.editVisible = true;
+      this.form =  this.activityData 
     },
     closeDialog() {
       this.editVisible = false;
     },
     async saveEdit() {
       // 验证表单
-      const isFormValid = await this.editFormRef.validate();
+      const isFormValid = await this.$refs.editFormRef.validate();
       if (!isFormValid) return;
 
       await this.updateActivity(this.form);
@@ -100,7 +102,6 @@ export default {
     async updateActivity(activityData) {
       try {
         // 发送 PUT 请求到后端服务器以更新活动
-        // URL 应该根据您的服务器端点进行调整
         const response = await axiosForActivity.put(`/api/activity/activities/${activityData.id}`, activityData);
 
         // 检查响应状态并处理结果
@@ -121,4 +122,34 @@ export default {
 
   }
 };
+
+
+// const saveEdit = async () => {
+//   // 首先验证表单
+//   const isFormValid = await editFormRef.value.validate();
+//   if (!isFormValid) {
+//     ElMessage.error('表单数据有误，请检查后再提交！');
+//     return;
+//   }
+
+//   // 表单验证通过后，转换数据（例如，leaderIds数组转为字符串）
+//   const submitData = {
+//     ...form,
+//   };
+
+//   // 提交数据到服务器
+//   try {
+//     // 假设有一个函数 sendUpdateRequest 来处理实际的API调用
+//     await sendUpdateRequest(submitData);
+//     ElMessage.success('活动更新成功！');
+//     // 成功后的处理，比如关闭弹窗
+//     editVisible.value = false;
+//     getData();
+//   } catch (error) {
+//     // 处理错误
+//     ElMessage.error('更新活动失败！');
+//   }
+
+
+// };
 </script>

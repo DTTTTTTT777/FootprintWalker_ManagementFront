@@ -40,11 +40,11 @@
           </template>
         </el-table-column>
 
-        <el-table-column prop="time" label="时间" width="200px">
-          <template #default="scope">
-            {{ formatDateTime(scope.row.time) }}
-          </template>
-        </el-table-column>
+<!--        <el-table-column prop="time" label="时间" width="200px">-->
+<!--          <template #default="scope">-->
+<!--            {{ formatDateTime(scope.row.time) }}-->
+<!--          </template>-->
+<!--        </el-table-column>-->
 
         <!--        <el-table-column prop="time" label="时间"></el-table-column>-->
         <el-table-column label="操作" width="250" align="center">

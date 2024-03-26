@@ -231,89 +231,11 @@
     </div>
   </el-dialog>
 
-
-  <!-- 编辑弹出框 -->
-  <el-dialog title="修改活动内容" v-model="editVisible" width="60%">
-    <!-- 表单内容 -->
-    <el-form :model="form" ref="editFormRef" label-width="120px">
-      <el-form-item label="活动标题" prop="title">
-        <el-input v-model="form.title"></el-input>
-      </el-form-item>
-      <el-form-item label="开始时间" prop="startTime">
-        <el-date-picker v-model="form.startTime" type="datetime" placeholder="选择日期时间"></el-date-picker>
-      </el-form-item>
-      <el-form-item label="结束时间" prop="endTime">
-        <el-date-picker v-model="form.endTime" type="datetime" placeholder="选择日期时间"></el-date-picker>
-      </el-form-item>
-      <el-form-item label="报名开始时间" prop="registrationStartTime">
-        <el-date-picker v-model="form.registrationStartTime" type="datetime" placeholder="选择日期时间"></el-date-picker>
-      </el-form-item>
-      <el-form-item label="报名结束时间" prop="registrationEndTime">
-        <el-date-picker v-model="form.registrationEndTime" type="datetime" placeholder="选择日期时间"></el-date-picker>
-      </el-form-item>
-      <el-form-item label="活动地点" prop="location">
-        <el-input v-model="form.location"></el-input>
-      </el-form-item>
-      <el-form-item label="活动描述" prop="activityInfo">
-        <el-input type="textarea" v-model="form.activityInfo"></el-input>
-      </el-form-item>
-
-      <el-form-item>
-        <div class="section upload-section">
-          <el-form-item label="活动图片" prop="adImages">
-            <el-upload
-                v-model:file-list="form.files"
-                class="upload-demo"
-                action="/foreignImage/upload"
-                name="smfile"
-                :headers="{ Authorization: 'kydXBqSSWZNb12Q25q6OmXGGSKwajXXk' }"
-                :on-success="handleSuccess"
-                :on-error="handleError"
-                :before-upload="beforeUpload"
-                :limit="10"
-                :on-exceed="handleExceed"
-                list-type="picture-card"
-                prop="proofInfo">
-              <i class="el-icon-plus"></i>
-            </el-upload>
-            <div class="image-preview" v-if="form.adImages.length > 0">
-              <el-image
-                  v-for="(image, index) in form.files"
-                  :key="index"
-                  class="collection-img"
-                  :src="image.response.data.url"
-                  :fit="'cover'">
-              </el-image>
-            </div>
-          </el-form-item>
-        </div>
-      </el-form-item>
-      <el-form-item label="活动收费" prop="cost">
-        <el-input-number v-model="form.cost" :min="0" controls-position="right" style="width: 40%;"></el-input-number>
-      </el-form-item>
-      <el-form-item label="人数上限" prop="estimatedLimit">
-        <el-input-number v-model="form.estimatedLimit" :min="1" controls-position="right" style="width: 40%;"></el-input-number>
-      </el-form-item>
-      <el-form-item label="负责人" prop="leaderIds">
-        <el-select v-model="form.leaderIds" multiple placeholder="请选择负责人">
-          <el-option
-              v-for="clerk in clerksList"
-              :key="clerk.id"
-              :label="clerk.name"
-              :value="clerk.id">
-          </el-option>
-        </el-select>
-      </el-form-item>
-      <!-- ...根据需要添加其他表单项... -->
-    </el-form>
-    <template #footer>
-      <span class="dialog-footer">
-        <el-button @click="editVisible = false">取消</el-button>
-        <el-button type="primary" @click="saveEdit">确定</el-button>
-        <el-button type="primary" @click="save">发布</el-button>
-      </span>
-    </template>
-  </el-dialog>
+  <edit-activity-dialog
+    v-if="editVisible"
+    :activityData="form"
+    v-model="editVisible"
+  ></edit-activity-dialog>
 
   <!-- 查看弹出框 -->
   <el-dialog title="查看活动详情" v-model="viewVisible" width="80%" :before-close="handleClose">
@@ -361,6 +283,9 @@ import { getClerkList } from'@/tools/apiRequest.js'
 import {Delete, Edit, Search, Plus, View} from '@element-plus/icons-vue';
 import{ formatDateTime , joinCampuses,formatActivityStatus ,getStatusType} from '@/tools/Format.js'
 import qs from 'qs'
+import EditActivityDialog from '@/components/editActivity.vue';
+
+
 
 // 表格编辑时弹窗和保存
 const editVisible = ref(false);
@@ -410,20 +335,6 @@ const tableData = ref<TableItem[]>([]);
 const pageTotal = ref(0);
 let clerksMap = {}
 const editFormRef = ref(null);
-
-enum ActivityStatus {
-  PUBLISHED,
-  DRAFT,
-  PENDING_REVIEW,
-  RETROSPECTIVE,
-}
-
-enum CampusData {
-  SIPING = "四平路校区",
-  JIADING = "嘉定校区",
-  HUXI = "沪西校区",
-  HUBEI = "沪北校区",
-}
 
 //请求数据
 const query = reactive({
@@ -563,11 +474,11 @@ const getData = async () => {
         console.error('clerksList is invalid:', clerksList);
         return map; // 返回一个空的映射
       }
-      console.log(clerksList)
-      console.log(clerksList.value)
+      // console.log(clerksList)
+      // console.log(clerksList.value)
       clerksList.forEach(clerk => {
         if (clerk && clerk.id != null && clerk.name) {
-          console.log(clerk)
+          // console.log(clerk)
           map[clerk.id] = clerk.name;
         } else {
           console.warn('Invalid clerk data:', clerk);
@@ -738,34 +649,7 @@ function isLastClerkId(id) {
   return view.leaderIds.indexOf(id) === view.leaderIds.length - 1;
 }
 
-const saveEdit = async () => {
-  // 首先验证表单
-  const isFormValid = await editFormRef.value.validate();
-  if (!isFormValid) {
-    ElMessage.error('表单数据有误，请检查后再提交！');
-    return;
-  }
 
-  // 表单验证通过后，转换数据（例如，leaderIds数组转为字符串）
-  const submitData = {
-    ...form,
-  };
-
-  // 提交数据到服务器
-  try {
-    // 假设有一个函数 sendUpdateRequest 来处理实际的API调用
-    await sendUpdateRequest(submitData);
-    ElMessage.success('活动更新成功！');
-    // 成功后的处理，比如关闭弹窗
-    editVisible.value = false;
-    getData();
-  } catch (error) {
-    // 处理错误
-    ElMessage.error('更新活动失败！');
-  }
-
-
-};
 
 const sendUpdateRequest = async (data) => {
 
@@ -781,10 +665,6 @@ const handleClose = () => {
   viewVisible.value = false;
 };
 
-const save = () => {
-    form.activityStatus = "PENDING_REVIEW"
-    saveEdit()
-}
 
 </script>
 

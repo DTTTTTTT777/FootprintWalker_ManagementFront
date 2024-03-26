@@ -216,9 +216,11 @@ import { ref, reactive, computed } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { Delete, Edit, Search, Plus, View } from '@element-plus/icons-vue';
 import { axiosForActivity , axiosForHuman} from '../main.js';
-import{ formatDateTime , joinCampuses,formatActivityStatus ,getStatusType} from '@/tools/Format.js'
-import { getClerkList } from '@/tools/apiRequest'
+import{ formatDateTime , joinCampuses,formatActivityStatus ,getStatusType} from '@/tools/Format.js';
+import { getClerkList } from '@/tools/apiRequest.js';
 import qs from 'qs'
+
+import EditActivityDialog from '@/components/editActivity.vue';
 
 import { onMounted } from 'vue'
 import {
@@ -507,6 +509,7 @@ async function uploadData(submitData) {
 //存储编辑的内容
 const saveEdit = async () => {
   // 首先验证表单
+  console.log(editFormRef)
   const isFormValid = await editFormRef.value.validate();
   if (!isFormValid) {
     ElMessage.error('表单数据有误，请检查后再提交！');

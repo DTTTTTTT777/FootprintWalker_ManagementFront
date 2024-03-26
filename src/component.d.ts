@@ -7,9 +7,10 @@ export {}
 
 declare module 'vue' {
   export interface GlobalComponents {
-    ElAutocomplete: typeof import('element-plus/es')['ElAutocomplete']
+    EditActivity: typeof import('./components/editActivity.vue')['default']
     ElAvatar: typeof import('element-plus/es')['ElAvatar']
     ElButton: typeof import('element-plus/es')['ElButton']
+    ElCard: typeof import('element-plus/es')['ElCard']
     ElCol: typeof import('element-plus/es')['ElCol']
     ElDatePicker: typeof import('element-plus/es')['ElDatePicker']
     ElDescriptions: typeof import('element-plus/es')['ElDescriptions']
@@ -30,10 +31,7 @@ declare module 'vue' {
     ElSubMenu: typeof import('element-plus/es')['ElSubMenu']
     ElTable: typeof import('element-plus/es')['ElTable']
     ElTableColumn: typeof import('element-plus/es')['ElTableColumn']
-    ElTabPane: typeof import('element-plus/es')['ElTabPane']
-    ElTabs: typeof import('element-plus/es')['ElTabs']
     ElTag: typeof import('element-plus/es')['ElTag']
-    ElTimePicker: typeof import('element-plus/es')['ElTimePicker']
     ElTooltip: typeof import('element-plus/es')['ElTooltip']
     ElUpload: typeof import('element-plus/es')['ElUpload']
     Header: typeof import('./components/header.vue')['default']
@@ -44,5 +42,7 @@ declare module 'vue' {
     Sidebar: typeof import('./components/sidebar.vue')['default']
     Tags: typeof import('./components/tags.vue')['default']
     TicketStatistics: typeof import('./components/TicketStatistics.vue')['default']
+    UploadPicture: typeof import('./components/uploadPicture.vue')['default']
+    ViewActivity: typeof import('./components/viewActivity.vue')['default']
   }
 }
