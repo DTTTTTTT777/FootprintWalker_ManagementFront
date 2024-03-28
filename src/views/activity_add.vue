@@ -235,6 +235,7 @@
     v-if="editVisible"
     :activityData="form"
     v-model="editVisible"
+    @close="handleEditClose"
   ></edit-activity-dialog>
 
   <!-- 查看弹出框 -->
@@ -279,7 +280,7 @@
 import { ref, reactive, computed } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { axiosForActivity } from '../main.js';
-import { getClerkList } from'@/tools/apiRequest.js'
+import { getClerkList } from '@/tools/apiRequest.js'
 import {Delete, Edit, Search, Plus, View} from '@element-plus/icons-vue';
 import{ formatDateTime , joinCampuses,formatActivityStatus ,getStatusType} from '@/tools/Format.js'
 import qs from 'qs'
@@ -451,8 +452,8 @@ const getData = async () => {
         statuses: ['DRAFT', 'REJECTED'],
         page: query.pageIndex - 1, // Spring Data JPA 页码从0开始
         size: query.pageSize,
-        search: query.value, // 这里是搜索条件，确保后端支持该参数
-        // 可能还有其他过滤条件
+        search: query.value, // 搜索条件
+
       },
       paramsSerializer: params => {
         // 使用 qs 自定义序列化参数
@@ -461,32 +462,31 @@ const getData = async () => {
     });
     clerksList = await getClerkList();
 
+    // 根据ID获取负责人的名字的方法
+    // 从ID映射到名字的计算属性
+    clerksMap = computed(() => {
+          const map = {};
+          if (!clerksList || !Array.isArray(clerksList)) {
+            console.error('clerksList is invalid:', clerksList);
+            return map; // 返回一个空的映射
+          }
+          // console.log(clerksList)
+          // console.log(clerksList.value)
+          clerksList.forEach(clerk => {
+            if (clerk && clerk.id != null && clerk.name) {
+              // console.log(clerk)
+              map[clerk.id] = clerk.name;
+            } else {
+              console.warn('Invalid clerk data:', clerk);
+            }
+          });
 
+          return map;
+        });
+        
     // 打印响应数据，便于调试
     console.log(response.data);
     console.log(clerksList);
-
-// 根据ID获取负责人的名字的方法
-// 从ID映射到名字的计算属性
-    clerksMap = computed(() => {
-      const map = {};
-      if (!clerksList || !Array.isArray(clerksList)) {
-        console.error('clerksList is invalid:', clerksList);
-        return map; // 返回一个空的映射
-      }
-      // console.log(clerksList)
-      // console.log(clerksList.value)
-      clerksList.forEach(clerk => {
-        if (clerk && clerk.id != null && clerk.name) {
-          // console.log(clerk)
-          map[clerk.id] = clerk.name;
-        } else {
-          console.warn('Invalid clerk data:', clerk);
-        }
-      });
-
-      return map;
-    });
 
     tableData.value = response.data.content.map(activity => {
       // 将 participantIds 数组长度设置为 currentParticipants
@@ -507,7 +507,11 @@ function getClerkNameById(id) {
 }
 
 
-
+const handleEditClose = ()=>{
+    editVisible.value = false;
+    console.log("成功关闭新增页面")
+    getData();
+};
 
 
 

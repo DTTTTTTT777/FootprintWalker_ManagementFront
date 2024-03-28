@@ -1,6 +1,6 @@
 <template>
   <!-- 编辑弹出框 -->
-  <el-dialog title="修改活动内容" v-model="editVisible" width="60%">
+  <el-dialog title="修改活动内容"  width="60%">
     <!-- 表单内容 -->
     <el-form :model="form" ref="editFormRef" label-width="120px">
       <el-form-item label="活动标题" prop="title">
@@ -51,7 +51,7 @@
     </el-form>
     <template #footer>
       <span class="dialog-footer">
-        <el-button @click="editVisible = false">取消</el-button>
+        <el-button @click="closeDialog">取消</el-button>
         <el-button type="primary" @click="saveEdit">确定</el-button>
       </span>
     </template>
@@ -70,7 +70,6 @@ export default {
   },
   data() {
     return {
-      editVisible: false,
       form: {}, // 初始化为空对象
       editFormRef: null,
       clerksList:[]
@@ -80,15 +79,22 @@ export default {
 
   mounted() {
     this.openDialog();
-    this.clerksList = getClerkList();
+    let response = getClerkList();
+    response.then((resultArray) => {
+      this.clerksList = resultArray
+ 
+    }).catch((error) => {
+      console.error("Promise 被拒绝:", error);
+    });
+    
+    console.log(this.clerksList)
   },
   methods: {
     openDialog() {
-      this.editVisible = true;
       this.form =  this.activityData 
     },
     closeDialog() {
-      this.editVisible = false;
+        this.$emit('close')
     },
     async saveEdit() {
       // 验证表单
@@ -106,7 +112,7 @@ export default {
 
         // 检查响应状态并处理结果
         if (response.status === 200) {
-          // 假设成功的话，可以发出一个成功的提示
+          // 假设成功的话，发出一个成功的提示
           this.$emit('update-success', response.data); // 发射一个事件通知父组件更新成功
           ElMessage.success('活动更新成功');
         } else {
@@ -124,32 +130,4 @@ export default {
 };
 
 
-// const saveEdit = async () => {
-//   // 首先验证表单
-//   const isFormValid = await editFormRef.value.validate();
-//   if (!isFormValid) {
-//     ElMessage.error('表单数据有误，请检查后再提交！');
-//     return;
-//   }
-
-//   // 表单验证通过后，转换数据（例如，leaderIds数组转为字符串）
-//   const submitData = {
-//     ...form,
-//   };
-
-//   // 提交数据到服务器
-//   try {
-//     // 假设有一个函数 sendUpdateRequest 来处理实际的API调用
-//     await sendUpdateRequest(submitData);
-//     ElMessage.success('活动更新成功！');
-//     // 成功后的处理，比如关闭弹窗
-//     editVisible.value = false;
-//     getData();
-//   } catch (error) {
-//     // 处理错误
-//     ElMessage.error('更新活动失败！');
-//   }
-
-
-// };
 </script>
